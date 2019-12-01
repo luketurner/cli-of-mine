@@ -1,8 +1,9 @@
+import { CLIError } from './error';
+import { ExecConfig, ValidExecConfig } from './interfaces';
+
 /**
  * Config module!
  */
-import { ExecConfig } from './interfaces';
-
 /**
  *
  * @param options
@@ -23,22 +24,51 @@ function ensureHelpOption(options: any) {
  * Validates the config object
  * @hidden
  */
-export function validateConfig(config: Partial<ExecConfig>): ExecConfig {
+export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
   // TODO
 
-  if (!config.name) throw new Error("Must specify ExecConfig.name");
+  if (!config) throw new Error("Must pass an object to exec()");
 
-  const validConfig: ExecConfig = {
-    generateHelp: true,
-    argv: process.argv,
-    name: config.name, // Typescript, infer this!
-    ...config
+  const { name, handler } = config;
+
+  if (!name) throw new Error("Must specify ExecConfig.name");
+  if (!handler) throw new Error("Must specify ExecConfig.handler");
+
+  const validConfig: ValidExecConfig = {
+    name,
+    handler,
+
+    argv: config.argv || process.argv,
+    stdin: config.stdin || process.stdin,
+    stdout: config.stdout || process.stdout,
+    stderr: config.stderr || process.stderr,
+
+    generateHelp: booleanDefault(config.generateHelp, true, "generateHelp"),
+    catchErrors: booleanDefault(config.catchErrors, true, "catchErrors"),
+
+    description: config.description || "",
+    examples: config.examples || [],
+
+    options: config.options || [],
+    subcommands: config.subcommands || []
   };
 
   if (validConfig.generateHelp) {
-    if (!validConfig.options) validConfig.options = [];
     ensureHelpOption(validConfig.options);
   }
 
   return validConfig;
+}
+
+function booleanDefault(
+  bool: any,
+  defaultValue: boolean,
+  propertyName: string
+): boolean {
+  if (typeof bool === "boolean") return bool;
+  if (!bool) return defaultValue;
+  throw new CLIError(
+    "BAD_CONFIG",
+    `Invalid value for config ${propertyName}: expected boolean, not ${bool}`
+  );
 }

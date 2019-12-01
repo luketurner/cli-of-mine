@@ -2,7 +2,13 @@ import { exec } from '.';
 import { ExecConfig } from './interfaces';
 
 const testCLI = (opts: Partial<ExecConfig>) =>
-  exec({ catchErrors: false, argv: [], name: "testapp", ...opts });
+  exec({
+    catchErrors: false,
+    argv: [],
+    name: "testapp",
+    handler: () => {},
+    ...opts
+  });
 
 describe("simple-cli", () => {
   describe("exec", () => {

@@ -1,21 +1,18 @@
-import * as commandLineArgs from "command-line-args";
-import {
-  ExecConfig,
-  CommandDefinition,
-  OptionDefinition,
-  Argv,
-  CLIArguments
-} from "./interfaces";
+import * as commandLineArgs from 'command-line-args';
+
+import { Argv, CLIArguments, CommandDefinition, OptionDefinition, ValidExecConfig } from './interfaces';
 
 export interface ParsedCommand {
   command: CommandDefinition;
   args: CLIArguments;
 }
 
-export function parseArgv(config: ExecConfig): ParsedCommand[] {
+/** @hidden */
+export function parseArgv(config: ValidExecConfig): ParsedCommand[] {
   return parseCommand(config, config.argv);
 }
 
+/** @hidden */
 export function parseCommand(
   command: CommandDefinition,
   argv: Argv

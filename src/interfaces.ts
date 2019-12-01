@@ -20,23 +20,30 @@ export interface HandlerCallback {
   (): Promise<HandlerResult>;
 }
 
-export interface ExecConfig {
+/** @hidden */
+export interface ValidExecConfig {
   name: string;
   argv: Argv;
 
-  stdin?: InputStream | "capture";
-  stdout?: OutputStream | "capture";
-  stderr?: OutputStream | "capture";
+  stdin: InputStream | "capture";
+  stdout: OutputStream | "capture";
+  stderr: OutputStream | "capture";
 
-  catchErrors?: boolean;
-  generateHelp?: boolean;
+  catchErrors: boolean;
+  generateHelp: boolean;
 
-  description?: string;
-  examples?: Example[];
+  description: string;
+  examples: Example[];
 
-  handler?: Handler;
-  options?: OptionDefinition[];
-  subcommands?: CommandDefinition[];
+  handler: Handler;
+  options: OptionDefinition[];
+  subcommands: CommandDefinition[];
+}
+
+export interface ExecConfig extends Partial<ValidExecConfig> {
+  // These fields are the only required ones
+  name: string;
+  handler: Handler;
 }
 
 /**

@@ -51,9 +51,7 @@ function composeParsedCommandHandlers(
   return composeMiddlewares(handlerMiddlewares);
 }
 
-export async function exec(
-  userConfig: Partial<ExecConfig>
-): Promise<ExecResult> {
+export async function exec(userConfig: ExecConfig): Promise<ExecResult> {
   const config = validateConfig(userConfig);
 
   const errorHandler = config.catchErrors
