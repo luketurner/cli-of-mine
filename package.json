@@ -9,7 +9,7 @@
     "test:watch": "npm run test -- --watchAll",
     "docs": "typedoc src",
     "docs:serve": "npm run docs && http-server ./docs -a localhost",
-    "docs:watch": "nodemon --watch src -e ts,md --exec \"npm run docs:serve\""
+    "docs:watch": "nodemon --watch src --watch README.md -e ts,md --exec \"npm run docs:serve\""
   },
   "repository": {
     "type": "git",
