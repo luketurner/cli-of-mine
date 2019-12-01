@@ -73,10 +73,10 @@
 					<li>Calling the correct function based on the command a user asked for.</li>
 					<li>Arbitrary nesting of subcommands using an Express-like middleware pattern.</li>
 					<li>Encapsulating all I/O streams for 100% testability -- assuming you use its logging primitives.</li>
-					<li>Converting the metadata you provide into nice-looking help text with <a href="https://github.com/75lb/command-line-usage">command-line-usage</a></li>
+					<li>Converting the metadata you provide into nice-looking help text with <a href="https://github.com/75lb/command-line-usage">command-line-usage</a>.</li>
 					<li>Handling execution errors.</li>
 				</ul>
-				<p>The goal is to make it easy to add a CLI to your app, without the CLI dictating the way the app should work.</p>
+				<p>See the <a href="https://luketurner.org/cli-of-mine">online docs</a> for API reference information.</p>
 				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
 					<h1>Getting Started</h1>
 				</a>
@@ -91,102 +91,20 @@ exec({
     ctx.console.log(<span class="hljs-string">"Hello, world!"</span>);
   }
 });</code></pre>
-				<p>All configuration is done by passing options into the <code>exec()</code> function. It returns a <code>Promise</code> that resolves when the execution is finished. See the <a href="https://luketurner.org/cli-of-mine">online API documentation</a> for more details.</p>
-				<p><strong>Terminology Note</strong></p>
+				<p>All configuration is done by passing options into the <a href="globals.html#exec">exec</a> function. It returns a <code>Promise</code> that resolves when the execution is finished.</p>
+				<p>For more information on the config <code>exec</code> supports, check out the <a href="globals.html#exec">exec</a> and <a href="interfaces/execconfig.html">ExecConfig</a> docs.</p>
+				<a href="#terminology-note" id="terminology-note" style="color: inherit; text-decoration: none;">
+					<h2>Terminology Note</h2>
+				</a>
 				<p>The following terms have a specific meaning when used in this documentation.</p>
 				<ul>
-					<li><em>argument</em> - A single command-line argument.</li>
+					<li><em>config</em> - A configuration option for <code>cli-of-mine</code>. Provided by the developer, not the user.</li>
+					<li><em>argument</em> - A single command-line argument, provided by the user.</li>
 					<li><em>command</em> - An argument that matches the name of a command definition.</li>
 					<li><em>option</em> - An argument that starts with a <code>-</code> and might have one or more values, e.g. <code>--force</code> or <code>--file foo.txt</code>.</li>
 				</ul>
-				<p>Also:</p>
-				<ul>
-					<li><em>config</em> - A configuration option for <code>cli-of-mine</code>. Provided by the developer, not the user.</li>
-				</ul>
-				<a href="#handlers" id="handlers" style="color: inherit; text-decoration: none;">
-					<h1>Handlers</h1>
-				</a>
-				<p><code>cli-of-mine</code> requires you to specify <strong>handlers</strong>, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.</p>
-				<p>Handlers are middlewares that get called with two arguments: a <code>context</code> object (see <a href="#HandlerContext">HandlerContext</a>) and a <code>next</code> function. Handlers are mostly used to:</p>
-				<ol>
-					<li>Execute your application logic for each command.</li>
-					<li>Provide shared context for subcommand handlers.</li>
-				</ol>
-				<p>The first use-case, executing business logic, is carried out by the final command in the chain. (The &quot;controller&quot;, so to speak.)</p>
-				<p>This is a very simple example that just logs the CLI arguments it received:</p>
-				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
-  <span class="hljs-keyword">const</span> { args, <span class="hljs-built_in">console</span> } = ctx;
-  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Got args:"</span>, args);
-}</code></pre>
-				<p>Note that handlers can return a value. Whatever you return will be returned to the next tier of middleware and eventually put into the <code>result</code> property of the ExecResult.</p>
-				<p>If a handler returns a <code>Promise</code>, the next subcommand handler won&#39;t execute until the promise is resolved.</p>
-				<p>For example, this will cause the <code>result</code> property to be equal to <code>ctx.args</code>:</p>
-				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
-  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(ctx.args);
-}</code></pre>
-				<p>In addition, if your command has subcommands, your handler <strong>must choose when to relinquish control to the next handler</strong> by calling <code>next()</code> (which returns a Promise). For example:</p>
-				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
-  <span class="hljs-comment">// things to do before subcommand starts</span>
-
-  <span class="hljs-keyword">return</span> next().then(<span class="hljs-function"><span class="hljs-params">result</span> =&gt;</span> {
-    <span class="hljs-comment">// things to do after subcommand is finished</span>
-  });
-}</code></pre>
-				<p>It&#39;s important to note, you cannot provide arguments to <code>next()</code>. If you want to some data to be available to subcommands, you should assign it to the <code>ctx.data</code> object, which <code>cli-of-mine</code> reserves for applications to use however they want.</p>
-				<p>For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished. The <code>async</code>/<code>await</code> syntax is used in this and remaining examples to improve readability.</p>
-				<pre><code class="language-js"><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
-  <span class="hljs-keyword">const</span> { args, data } = ctx;
-
-  <span class="hljs-comment">// initialize dbConn before running subcommand -- assume getDatabaseConnection is part of your application's code</span>
-  data.dbConn = <span class="hljs-keyword">await</span> getDatabaseConnection(args.db);
-
-  <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> next();
-
-  <span class="hljs-comment">// Clean up dbConn after subcommand is done</span>
-  <span class="hljs-keyword">await</span> data.dbConn.close();
-
-  <span class="hljs-comment">// make sure to return the subcommand's result if you care about it.</span>
-  <span class="hljs-keyword">return</span> result;
-}</code></pre>
-				<a href="#error-handling" id="error-handling" style="color: inherit; text-decoration: none;">
-					<h3>Error Handling</h3>
-				</a>
-				<p>Handlers should try to always throw instances of <code>AppError</code>, or subclasses thereof. These error classes accept two constructor arguments -- a code and a message. For example:</p>
-				<pre><code class="language-js"><span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> AppError(
-  <span class="hljs-string">"SERVER_UNAVAILABLE"</span>,
-  <span class="hljs-string">"The downstream server is unavailable."</span>
-);</code></pre>
-				<p>You can also construct an AppError from an existing error:</p>
-				<pre><code class="language-js"><span class="hljs-keyword">try</span> {
-  <span class="hljs-comment">// do stuff</span>
-} <span class="hljs-keyword">catch</span> (e) {
-  <span class="hljs-keyword">throw</span> AppError.fromError(e);
-}</code></pre>
-				<p>Note that all AppError codes are &quot;namespaced&quot; by prefixing them with <code>APP_</code> by default. This allows you to use whatever error codes you want without using the same codes as <code>cli-of-mine</code> (or Node itself.)</p>
-				<p>A common use-case is to change that prefix, so you can document error codes more cleanly in your app. You can do so by extending AppError:</p>
-				<pre><code class="language-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FooError</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">AppError</span> </span>{
-  code_prefix = <span class="hljs-string">"FOO_"</span>;
-}
-
-<span class="hljs-keyword">try</span> {
-  <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> FooError(<span class="hljs-string">"MY_CODE"</span>, <span class="hljs-string">"my message"</span>);
-} <span class="hljs-keyword">catch</span> (e) {
-  <span class="hljs-built_in">console</span>.log(e.code); <span class="hljs-comment">// logs FOO_MY_CODE</span>
-}</code></pre>
-				<a href="#nested-subcommands" id="nested-subcommands" style="color: inherit; text-decoration: none;">
-					<h2>Nested Subcommands</h2>
-				</a>
-				<p><code>cli-of-mine</code> is designed to support arbitrarily nested levels of subcommands using a <strong>middleware pattern</strong> inspired by frameworks like Express. This allows you to handle options at every subcommand level.</p>
-				<p>For example, assume <code>widgets</code> is a subcommand of your application and <code>list</code> is a subcommand of <code>widgets</code> -- so users can run <code>myapp widgets list</code>.</p>
-				<p>If someone runs: <code>myapp -v widgets list --filter green</code>, then the &quot;middleware chain&quot; will be constructed like so:</p>
-				<ol>
-					<li>The root handler is given the <code>-v</code> argument.</li>
-					<li>The <code>widgets</code> handler is given no arguments.</li>
-					<li>The <code>list</code> handler is given the <code>--filter green</code> argument.</li>
-				</ol>
-				<p>All handlers are given a shared <code>ctx</code> object as their third argument. This object is a &quot;grab bag&quot; that can be used for handlers to share application-specific data.</p>
 				<a href="#help-text" id="help-text" style="color: inherit; text-decoration: none;">
-					<h2>Help Text</h2>
+					<h1>Help Text</h1>
 				</a>
 				<p><code>cli-of-mine</code> will intercept <code>--help</code> flags and handle them automatically. When this happens, <em>none</em> of your handlers will be called and the <code>result</code> of the execution will be <code>undefined</code>.</p>
 				<p>Different text is shown based on which command receives the <code>--help</code> flag. For example:</p>
@@ -198,9 +116,123 @@ myapp widgets --<span class="hljs-built_in">help</span>
 
 <span class="hljs-comment"># displays help for "list" subcommand</span>
 myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
-				<p>You can disable this functionality by setting <code>generateHelp: false</code> in your ExecConfig.</p>
+				<p>You can disable this functionality by setting <code>generateHelp: false</code> in your <a href="interfaces/execconfig.html">ExecConfig</a>.</p>
+				<a href="#handlers" id="handlers" style="color: inherit; text-decoration: none;">
+					<h1>Handlers</h1>
+				</a>
+				<p><code>cli-of-mine</code> requires you to specify <strong>handlers</strong>, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.</p>
+				<p>Handlers are functions that get called with two arguments: a <code>context</code> object (see <a href="interfaces/handlercontext.html">HandlerContext</a>) and a <code>next</code> function (see <a href="interfaces/handlercallback.html">HandlerCallback</a>). See the <a href="interfaces/handler.html">Handler</a> interface for more details about supported types.</p>
+				<p>You can ignore the <code>next</code> function unless you want to support subcommands. See <a href="#subcommands">Subcommands</a>.</p>
+				<p>Handlers are mostly used to:</p>
+				<ol>
+					<li>Execute your application logic for each command.</li>
+					<li>Provide shared context for subcommand handlers.</li>
+				</ol>
+				<p>The first use-case, executing business logic, is carried out by the final command in the chain. (The &quot;controller&quot;, so to speak.)</p>
+				<p>This is a very simple example that just logs the CLI arguments it received:</p>
+				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-keyword">const</span> { args, <span class="hljs-built_in">console</span> } = ctx;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Got args:"</span>, args);
+}</code></pre>
+				<a href="#handler-results" id="handler-results" style="color: inherit; text-decoration: none;">
+					<h2>Handler Results</h2>
+				</a>
+				<p>Handlers can return a value of any type. This provides a way for handlers to communicate with the code that called <a href="globals.html#exec">exec</a>.</p>
+				<p>Whatever they return will be returned to the next tier of middleware and eventually put into the <code>result</code> property of the <a href="interfaces/execresult.html">ExecResult</a>.</p>
+				<p>Also, if a handler returns a <code>Promise</code>, the next subcommand handler won&#39;t execute until the promise is resolved.</p>
+				<p>For example, this will cause the <code>ExecResult.result</code> property to be equal to <code>ctx.args</code>:</p>
+				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(ctx.args);
+}</code></pre>
+				<a href="#subcommands" id="subcommands" style="color: inherit; text-decoration: none;">
+					<h2>Subcommands</h2>
+				</a>
+				<p><code>cli-of-mine</code> is designed to support arbitrarily nested levels of subcommands using a <strong>middleware pattern</strong> inspired by frameworks like Express. This allows you to handle options at every subcommand level.</p>
+				<p>The special thing about middlewares is that your handler <strong>must choose when to relinquish control to the next handler</strong> by calling <code>next()</code> (which returns a Promise). For example:</p>
+				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-comment">// things to do before subcommand starts</span>
+
+  <span class="hljs-comment">// next() runs the subcommand's handler</span>
+  <span class="hljs-keyword">return</span> next().then(<span class="hljs-function"><span class="hljs-params">result</span> =&gt;</span> {
+    <span class="hljs-comment">// things to do after subcommand is finished</span>
+  });
+}</code></pre>
+				<p>To &quot;abort&quot; the middleware chain, you can throw an error, or simply not call <code>next()</code>.</p>
+				<p>Your final handler (the &quot;controller&quot; in Express parlance) can call <code>next</code> if it wants, but it doesn&#39;t have to. If it does, the <code>next</code> is a no-op.</p>
+				<a href="#subcommand-options" id="subcommand-options" style="color: inherit; text-decoration: none;">
+					<h3>Subcommand Options</h3>
+				</a>
+				<p>Each &quot;level&quot; of command/subcommand specifies its own set of options. The handler is only provided the options relevant to that specific subcommand, not the ones before or after it.</p>
+				<p>For example, assume <code>widgets</code> is a subcommand of your application and <code>list</code> is a subcommand of <code>widgets</code> -- so users can run <code>myapp widgets list</code>.</p>
+				<p>If someone runs: <code>myapp -v widgets list --filter green</code>, then the options will be doled out like so:</p>
+				<ol>
+					<li>The root handler is given the <code>-v</code> argument.</li>
+					<li>The <code>widgets</code> handler is given no arguments.</li>
+					<li>The <code>list</code> handler is given the <code>--filter green</code> argument.</li>
+				</ol>
+				<p>If the <code>list</code> handler actually cares about the <code>-v</code> argument, the root handler has to give it that information explicitly using <code>ctx.data</code> (see below).</p>
+				<a href="#subcommands-sharing-data" id="subcommands-sharing-data" style="color: inherit; text-decoration: none;">
+					<h3>Subcommands Sharing Data</h3>
+				</a>
+				<p>You cannot provide arguments to <code>next()</code>.</p>
+				<p>If you want to share data between subcommands, you should assign it to the <code>ctx.data</code> object, which is reserved for arbitrary handler data.</p>
+				<p>For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished.</p>
+				<blockquote>
+					<p>Note: The <code>async</code>/<code>await</code> syntax is used in this and remaining examples to improve readability. But good ol&#39; Promise chains work just fine.</p>
+				</blockquote>
+				<pre><code class="language-js"><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-keyword">const</span> { args, data } = ctx;
+
+  <span class="hljs-comment">// initialize dbConn before running subcommand</span>
+  data.dbConn = <span class="hljs-keyword">await</span> getFooDatabaseConn(args.db);
+
+  <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> next();
+
+  <span class="hljs-comment">// Clean up dbConn after subcommand is done</span>
+  <span class="hljs-keyword">await</span> data.dbConn.close();
+
+  <span class="hljs-comment">// make sure to return the subcommand's result if you care about it.</span>
+  <span class="hljs-keyword">return</span> result;
+}</code></pre>
+				<a href="#error-handling" id="error-handling" style="color: inherit; text-decoration: none;">
+					<h2>Error Handling</h2>
+				</a>
+				<p>Handlers can &quot;buy into&quot; improved error handling by throwing instances of <a href="classes/apperror.html">AppError</a>. It extends <code>Error</code> with support for error codes, and it automatically &quot;namespaces&quot; your codes by prefixing them with <code>APP_</code>, so they won&#39;t conflict with <code>cli-of-mine</code> codes (or Node codes).</p>
+				<p>For example:</p>
+				<pre><code class="language-js"><span class="hljs-keyword">const</span> { AppError } = <span class="hljs-built_in">require</span>(<span class="hljs-string">"cli-of-mine"</span>);
+
+<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> AppError(
+  <span class="hljs-string">"SERVER_UNAVAILABLE"</span>, <span class="hljs-comment">// error code</span>
+  <span class="hljs-string">"The downstream server is unavailable."</span> <span class="hljs-comment">// message</span>
+);</code></pre>
+				<p>Additionally, you can set the optional <code>processExitCode</code> property to recommend an exit code to use, should this error become fatal.</p>
+				<p>You can construct an AppError from an existing error using <code>fromError</code>:</p>
+				<pre><code class="language-js"><span class="hljs-keyword">try</span> {
+  <span class="hljs-comment">// do stuff</span>
+} <span class="hljs-keyword">catch</span> (e) {
+  <span class="hljs-keyword">throw</span> AppError.fromError(e);
+}</code></pre>
+				<a href="#custom-error-classes" id="custom-error-classes" style="color: inherit; text-decoration: none;">
+					<h3>Custom Error Classes</h3>
+				</a>
+				<p>It&#39;s recommended that you extend <a href="classes/apperror.html">AppError</a> to implement your own error class, so you can document error codes more cleanly in your app. For example:</p>
+				<pre><code class="language-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FooError</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">AppError</span> </span>{
+  code_prefix = <span class="hljs-string">"FOO_"</span>;
+}
+
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> FooError(<span class="hljs-string">"MY_CODE"</span>, <span class="hljs-string">"my message"</span>);
+} <span class="hljs-keyword">catch</span> (e) {
+  <span class="hljs-built_in">console</span>.log(e.code); <span class="hljs-comment">// logs FOO_MY_CODE</span>
+}</code></pre>
+				<a href="#catching-errors" id="catching-errors" style="color: inherit; text-decoration: none;">
+					<h2>Catching Errors</h2>
+				</a>
+				<p>By default, the <a href="globals.html#exec">exec</a> function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.</p>
+				<p>If you wish to disable this behavior, set <code>catchErrors: false</code> in your <a href="interfaces/execconfig.html">ExecConfig</a>.</p>
+				<p>When <code>catchErrors</code> is false, the Promise returned by <a href="globals.html#exec">exec</a> will possibly reject with an <a href="classes/executionerror.html">ExecutionError</a>, that you can inspect and handle in your application.</p>
 				<a href="#faq" id="faq" style="color: inherit; text-decoration: none;">
-					<h2>FAQ</h2>
+					<h1>FAQ</h1>
 				</a>
 				<p><strong>Q: Is there an @types/cli-of-mine package?</strong></p>
 				<p>No -- <code>cli-of-mine</code> is written in Typescript and includes the type definitions bundled in the package. No additional <code>@types</code> are needed.</p>
@@ -253,6 +285,12 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
 						<a href="interfaces/execresult.html" class="tsd-kind-icon">Exec<wbr>Result</a>
 					</li>
 					<li class=" tsd-kind-interface">
+						<a href="interfaces/handler.html" class="tsd-kind-icon">Handler</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/handlercallback.html" class="tsd-kind-icon">Handler<wbr>Callback</a>
+					</li>
+					<li class=" tsd-kind-interface">
 						<a href="interfaces/handlercontext.html" class="tsd-kind-icon">Handler<wbr>Context</a>
 					</li>
 					<li class=" tsd-kind-interface">
@@ -268,19 +306,10 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
 						<a href="globals.html#argv" class="tsd-kind-icon">Argv</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#composedmiddleware" class="tsd-kind-icon">Composed<wbr>Middleware</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#example" class="tsd-kind-icon">Example</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#exitcode" class="tsd-kind-icon">Exit<wbr>Code</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#handler" class="tsd-kind-icon">Handler</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#handlercallback" class="tsd-kind-icon">Handler<wbr>Callback</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#handlerresult" class="tsd-kind-icon">Handler<wbr>Result</a>
@@ -289,25 +318,10 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
 						<a href="globals.html#inputstream" class="tsd-kind-icon">Input<wbr>Stream</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#middleware" class="tsd-kind-icon">Middleware</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#middlewarecallback" class="tsd-kind-icon">Middleware<wbr>Callback</a>
-					</li>
-					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#outputstream" class="tsd-kind-icon">Output<wbr>Stream</a>
 					</li>
 					<li class=" tsd-kind-function">
-						<a href="globals.html#composemiddlewares" class="tsd-kind-icon">compose<wbr>Middlewares</a>
-					</li>
-					<li class=" tsd-kind-function">
 						<a href="globals.html#exec" class="tsd-kind-icon">exec</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#parseargv" class="tsd-kind-icon">parse<wbr>Argv</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#parsecommand" class="tsd-kind-icon">parse<wbr>Command</a>
 					</li>
 				</ul>
 			</nav>
