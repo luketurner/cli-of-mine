@@ -1,12 +1,5 @@
 import { Readable, Writable } from 'stream';
 
-// Function types
-export type Handler = (
-  ctx: HandlerContext,
-  next: HandlerCallback
-) => HandlerResult | Promise<HandlerResult>;
-export type HandlerCallback = () => Promise<HandlerResult>;
-
 // Domain type-renames
 // (might want to make these types "better" / more precise)
 export type Example = string;
@@ -16,6 +9,16 @@ export type ExitCode = number;
 
 export type InputStream = Readable;
 export type OutputStream = Writable;
+
+export interface Handler {
+  (ctx: HandlerContext, next: HandlerCallback):
+    | HandlerResult
+    | Promise<HandlerResult>;
+}
+
+export interface HandlerCallback {
+  (): Promise<HandlerResult>;
+}
 
 export interface ExecConfig {
   name: string;
