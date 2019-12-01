@@ -246,14 +246,14 @@ When I was working on a Node CLI application, [repost](https://github.com/luketu
 
 Most existing CLI libraries violate at least one of those criteria.
 
-The best library I found was `command-line-args`, which is great. I ended up writing more and more "frameworky boilerplate" around that library, simplifying usage for the most common use-cases, and this is what I ended up with.
+The best library I found was [command-line-args], which is great. I ended up writing more and more "frameworky boilerplate" around that library, simplifying usage for the most common use-cases, and this is what I ended up with.
 
 **Q: When should I _not_ use cli-of-mine?**
 
-- You just want to parse arguments and you don't like inversion of control. In that case, try `command-line-args` or `minimist` instead.
-- You want _all_ the batteries included. In that case, there are some much larger frameworks like `oclif` and `yargs` that might be able to help you.
-- You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (But, it's freakin' simple. You can fork it and understand the code in an hour.)
-- You use non-utf8 encodings. (For now, `cli-of-mine` works best with utf8 encoded streams.)
+- You just want to parse arguments and you don't like inversion of control. In that case, try [command-line-args] or [minimist] instead.
+- You want _all_ the batteries included. In that case, there are some larger frameworks like [oclif] and [yargs] that might be able to help you.
+- You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (This may change in the future.) For a similarly-feaatured, very popular library, try [commander].
+- You use non-utf8 encodings. For now, `cli-of-mine` works best with utf8 encoded streams.
 
 ---
 
@@ -261,6 +261,10 @@ Copyright 2019 Luke Turner - Published under the MIT License.
 
 [command-line-args]: https://github.com/75lb/command-line-args
 [command-line-usage]: https://github.com/75lb/command-line-usage
+[commander]: https://github.com/tj/commander.js
+[minimist]: https://github.com/substack/minimist
+[oclif]: https://github.com/oclif/oclif
+[yargs]: https://github.com/yargs/yargs
 [online docs]: https://luketurner.org/cli-of-mine
 [handlercontext]: interfaces/handlercontext.html
 [commanddefinition]: interfaces/commanddefinition.html
