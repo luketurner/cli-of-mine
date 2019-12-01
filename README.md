@@ -177,17 +177,11 @@ myapp widgets list --help
 
 The above would all display help pages with different options -- the first with globalfor `myapp`, the second for `myapp widgets`, the third for `myapp widgets list`.
 
-But there's more to help-text
-
 ## FAQ
 
-**Q: What prompted you to create cli-of-mine?**
+**Q: Is there an @types/cli-of-mine package?**
 
-When I was working on a Node CLI application, [repost](https://github.com/luketurner/repost), one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn't use classes or Typescript.
-
-Most existing CLI libraries violate at least one of those criteria.
-
-The best library I found was `command-line-args`, which is great, but requires boilerplate code. So I took that boilerplate and made a "framework".
+No -- `cli-of-mine` is written in Typescript and includes the type definitions bundled in the package. No additional `@types` are needed.
 
 **Q: Why does my application have to use your special console?**
 
@@ -200,6 +194,14 @@ If you don't care about global changes, your handler can assign the console for 
 ```js
 global.console = ctx.console;
 ```
+
+**Q: What prompted you to create cli-of-mine?**
+
+When I was working on a Node CLI application, [repost](https://github.com/luketurner/repost), one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn't use classes or Typescript.
+
+Most existing CLI libraries violate at least one of those criteria.
+
+The best library I found was `command-line-args`, which is great. I ended up writing more and more "frameworky boilerplate" around that library, simplifying usage for the most common use-cases, and this is what I ended up with.
 
 **Q: When should I _not_ use cli-of-mine?**
 
