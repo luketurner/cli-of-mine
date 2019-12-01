@@ -242,17 +242,21 @@ global.console = ctx.console;
 
 **Q: What prompted you to create cli-of-mine?**
 
-When I was working on a Node CLI application, [repost](https://github.com/luketurner/repost), one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn't use classes or Typescript.
+When I was working on a Node CLI application, [repost](https://github.com/luketurner/repost), one of my goals was to create an application that controls all its inputs and outputs, and has no global state or singletons.
 
-Most existing CLI libraries violate at least one of those criteria.
+As part of that, I wanted to make a CLI framework that allowed you to completely control your application's I/O, for instance to make assertions about output data. This is that framework.
 
-The best library I found was [command-line-args], which is great. I ended up writing more and more "frameworky boilerplate" around that library, simplifying usage for the most common use-cases, and this is what I ended up with.
+**Q: But what about all the existing CLI frameworks?**
+
+Surprisingly few CLI frameworks are designed for effective testing from the user's perspective. If I call the program with X arguments, do I see Y results? That can be a tough question to answer, even if you're using a CLI framework. The "special" thing about `cli-of-mine` is that it tries to make this kind of assertion easier using the `stdout: "capture"` option.
+
+Having said that, the "established" Node CLI frameworks are still great, they just don't fit the grooves in my brain as well as this one does.
 
 **Q: When should I _not_ use cli-of-mine?**
 
 - You just want to parse arguments and you don't like inversion of control. In that case, try [command-line-args] or [minimist] instead.
 - You want _all_ the batteries included. In that case, there are some larger frameworks like [oclif] and [yargs] that might be able to help you.
-- You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (This may change in the future.) For a similarly-feaatured, very popular library, try [commander].
+- You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (This may change in the future.) For a similarly-featured, very popular library, try [commander].
 - You use non-utf8 encodings. For now, `cli-of-mine` works best with utf8 encoded streams.
 
 ---

@@ -242,14 +242,16 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
 				<p>If you don&#39;t care about global changes, your handler can assign the console for global use with:</p>
 				<pre><code class="language-js">global.console = ctx.console;</code></pre>
 				<p><strong>Q: What prompted you to create cli-of-mine?</strong></p>
-				<p>When I was working on a Node CLI application, <a href="https://github.com/luketurner/repost">repost</a>, one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn&#39;t use classes or Typescript.</p>
-				<p>Most existing CLI libraries violate at least one of those criteria.</p>
-				<p>The best library I found was <a href="https://github.com/75lb/command-line-args">command-line-args</a>, which is great. I ended up writing more and more &quot;frameworky boilerplate&quot; around that library, simplifying usage for the most common use-cases, and this is what I ended up with.</p>
+				<p>When I was working on a Node CLI application, <a href="https://github.com/luketurner/repost">repost</a>, one of my goals was to create an application that controls all its inputs and outputs, and has no global state or singletons.</p>
+				<p>As part of that, I wanted to make a CLI framework that allowed you to completely control your application&#39;s I/O, for instance to make assertions about output data. This is that framework.</p>
+				<p><strong>Q: But what about all the existing CLI frameworks?</strong></p>
+				<p>Surprisingly few CLI frameworks are designed for effective testing from the user&#39;s perspective. If I call the program with X arguments, do I see Y results? That can be a tough question to answer, even if you&#39;re using a CLI framework. The &quot;special&quot; thing about <code>cli-of-mine</code> is that it tries to make this kind of assertion easier using the <code>stdout: &quot;capture&quot;</code> option.</p>
+				<p>Having said that, the &quot;established&quot; Node CLI frameworks are still great, they just don&#39;t fit the grooves in my brain as well as this one does.</p>
 				<p><strong>Q: When should I <em>not</em> use cli-of-mine?</strong></p>
 				<ul>
 					<li>You just want to parse arguments and you don&#39;t like inversion of control. In that case, try <a href="https://github.com/75lb/command-line-args">command-line-args</a> or <a href="https://github.com/substack/minimist">minimist</a> instead.</li>
 					<li>You want <em>all</em> the batteries included. In that case, there are some larger frameworks like <a href="https://github.com/oclif/oclif">oclif</a> and <a href="https://github.com/yargs/yargs">yargs</a> that might be able to help you.</li>
-					<li>You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (This may change in the future.) For a similarly-feaatured, very popular library, try <a href="https://github.com/tj/commander.js">commander</a>.</li>
+					<li>You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (This may change in the future.) For a similarly-featured, very popular library, try <a href="https://github.com/tj/commander.js">commander</a>.</li>
 					<li>You use non-utf8 encodings. For now, <code>cli-of-mine</code> works best with utf8 encoded streams.</li>
 				</ul>
 				<hr>
