@@ -1,5 +1,5 @@
 export type Middleware = (next: MiddlewareCallback) => Promise<any>;
-export type MiddlewareCallback = () => Promise<void>;
+export type MiddlewareCallback = () => Promise<any>;
 export type ComposedMiddleware = () => Promise<any>;
 
 export function composeMiddlewares(

@@ -107,13 +107,13 @@
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
 					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>Execution<wbr>Error<span class="tsd-signature-symbol">(</span>reason<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, ctx<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="executionerror.html" class="tsd-signature-type">ExecutionError</a></li>
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Execution<wbr>Error<span class="tsd-signature-symbol">(</span>reason<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span>, ctx<span class="tsd-signature-symbol">: </span><a href="../interfaces/handlercontext.html" class="tsd-signature-type">HandlerContext</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="executionerror.html" class="tsd-signature-type">ExecutionError</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in src/error.ts:39</li>
+									<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/7cd20e7/src/error.ts#L45">src/error.ts:45</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -122,7 +122,7 @@
 									<h5>reason: <span class="tsd-signature-type">any</span></h5>
 								</li>
 								<li>
-									<h5>ctx: <span class="tsd-signature-type">any</span></h5>
+									<h5>ctx: <a href="../interfaces/handlercontext.html" class="tsd-signature-type">HandlerContext</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">undefined</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="executionerror.html" class="tsd-signature-type">ExecutionError</a></h4>
@@ -138,7 +138,7 @@
 					<div class="tsd-signature tsd-kind-icon">code<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in src/error.ts:38</li>
+							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/7cd20e7/src/error.ts#L44">src/error.ts:44</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -148,7 +148,7 @@
 					<div class="tsd-signature tsd-kind-icon">ctx<span class="tsd-signature-symbol">:</span> <a href="../interfaces/handlercontext.html" class="tsd-signature-type">HandlerContext</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in src/error.ts:36</li>
+							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/7cd20e7/src/error.ts#L42">src/error.ts:42</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -180,7 +180,7 @@
 					<div class="tsd-signature tsd-kind-icon">process<wbr>Exit<wbr>Code<span class="tsd-signature-symbol">:</span> <a href="../globals.html#exitcode" class="tsd-signature-type">ExitCode</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in src/error.ts:39</li>
+							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/7cd20e7/src/error.ts#L45">src/error.ts:45</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -190,14 +190,14 @@
 					<div class="tsd-signature tsd-kind-icon">reason<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">CodedError</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in src/error.ts:37</li>
+							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/7cd20e7/src/error.ts#L43">src/error.ts:43</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-overwrite tsd-is-inherited">
 					<a name="stack" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagOptional">Optional</span> stack</h3>
-					<div class="tsd-signature tsd-kind-icon">stack<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
+					<div class="tsd-signature tsd-kind-icon">stack<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">undefined</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<p>Inherited from Error.stack</p>
 						<p>Overrides Error.stack</p>
@@ -286,19 +286,25 @@
 						<a href="../interfaces/optiondefinition.html" class="tsd-kind-icon">Option<wbr>Definition</a>
 					</li>
 					<li class=" tsd-kind-interface">
+						<a href="../interfaces/parsedcommand.html" class="tsd-kind-icon">Parsed<wbr>Command</a>
+					</li>
+					<li class=" tsd-kind-interface">
 						<a href="../interfaces/userdata.html" class="tsd-kind-icon">User<wbr>Data</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="../globals.html#argv" class="tsd-kind-icon">Argv</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="../globals.html#composedmiddleware" class="tsd-kind-icon">Composed<wbr>Middleware</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="../globals.html#example" class="tsd-kind-icon">Example</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="../globals.html#exechandler" class="tsd-kind-icon">Exec<wbr>Handler</a>
+						<a href="../globals.html#exitcode" class="tsd-kind-icon">Exit<wbr>Code</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="../globals.html#exitcode" class="tsd-kind-icon">Exit<wbr>Code</a>
+						<a href="../globals.html#handler" class="tsd-kind-icon">Handler</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="../globals.html#handlercallback" class="tsd-kind-icon">Handler<wbr>Callback</a>
@@ -310,10 +316,25 @@
 						<a href="../globals.html#inputstream" class="tsd-kind-icon">Input<wbr>Stream</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="../globals.html#middleware" class="tsd-kind-icon">Middleware</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="../globals.html#middlewarecallback" class="tsd-kind-icon">Middleware<wbr>Callback</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="../globals.html#outputstream" class="tsd-kind-icon">Output<wbr>Stream</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="../globals.html#composemiddlewares" class="tsd-kind-icon">compose<wbr>Middlewares</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="../globals.html#exec" class="tsd-kind-icon">exec</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#parseargv" class="tsd-kind-icon">parse<wbr>Argv</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="../globals.html#parsecommand" class="tsd-kind-icon">parse<wbr>Command</a>
 					</li>
 				</ul>
 			</nav>

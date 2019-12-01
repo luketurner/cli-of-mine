@@ -69,12 +69,12 @@
 				<p>This is a no-fuss CLI framework. It solves the CLI stuff, so you can focus on the other stuff.</p>
 				<p>What&#39;s it solve for you?</p>
 				<ul>
-					<li>Parsing and validating command-line arguments.</li>
+					<li>Parsing and validating command-line arguments with <a href="https://github.com/75lb/command-line-args">command-line-args</a>.</li>
 					<li>Calling the correct function based on the command a user asked for.</li>
 					<li>Arbitrary nesting of subcommands using an Express-like middleware pattern.</li>
 					<li>Encapsulating all I/O streams for 100% testability -- assuming you use its logging primitives.</li>
-					<li>Converting the metadata you provide into nice-looking help text.</li>
-					<li>Handling errors.</li>
+					<li>Converting the metadata you provide into nice-looking help text with <a href="https://github.com/75lb/command-line-usage">command-line-usage</a></li>
+					<li>Handling execution errors.</li>
 				</ul>
 				<p>The goal is to make it easy to add a CLI to your app, without the CLI dictating the way the app should work.</p>
 				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
@@ -91,12 +91,23 @@ exec({
     ctx.console.log(<span class="hljs-string">"Hello, world!"</span>);
   }
 });</code></pre>
-				<p>All configuration is done by passing options into the <code>exec()</code> function. It returns a <code>Promise</code> that resolves when the execution is finished. See <a href="#exec">exec</a> below for more details.</p>
+				<p>All configuration is done by passing options into the <code>exec()</code> function. It returns a <code>Promise</code> that resolves when the execution is finished. See the <a href="https://luketurner.org/cli-of-mine">online API documentation</a> for more details.</p>
+				<p><strong>Terminology Note</strong></p>
+				<p>The following terms have a specific meaning when used in this documentation.</p>
+				<ul>
+					<li><em>argument</em> - A single command-line argument.</li>
+					<li><em>command</em> - An argument that matches the name of a command definition.</li>
+					<li><em>option</em> - An argument that starts with a <code>-</code> and might have one or more values, e.g. <code>--force</code> or <code>--file foo.txt</code>.</li>
+				</ul>
+				<p>Also:</p>
+				<ul>
+					<li><em>config</em> - A configuration option for <code>cli-of-mine</code>. Provided by the developer, not the user.</li>
+				</ul>
 				<a href="#handlers" id="handlers" style="color: inherit; text-decoration: none;">
-					<h2>Handlers</h2>
+					<h1>Handlers</h1>
 				</a>
-				<p><code>cli-of-mine</code> requires you to specify &quot;handlers&quot; to describe the <em>implementation</em> of your CLI commands. Then, it will construct an execution context and call the appropriate handlers for the commands the user asked for.</p>
-				<p>Handler functions are <em>middlewares</em> that get called with two arguments: a <code>context</code> object (see <a href="#HandlerContext">HandlerContext</a>) and a <code>next</code> function. Handlers are mostly used to:</p>
+				<p><code>cli-of-mine</code> requires you to specify <strong>handlers</strong>, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.</p>
+				<p>Handlers are middlewares that get called with two arguments: a <code>context</code> object (see <a href="#HandlerContext">HandlerContext</a>) and a <code>next</code> function. Handlers are mostly used to:</p>
 				<ol>
 					<li>Execute your application logic for each command.</li>
 					<li>Provide shared context for subcommand handlers.</li>
@@ -107,7 +118,8 @@ exec({
   <span class="hljs-keyword">const</span> { args, <span class="hljs-built_in">console</span> } = ctx;
   <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Got args:"</span>, args);
 }</code></pre>
-				<p>Note that handlers can return a value. <code>cli-of-mine</code> doesn&#39;t care what you return, but it&#39;ll put the value into the <code>result</code> property of the object resolved by <code>exec()</code>. If a handler returns a <code>Promise</code>, the next subcommand handler won&#39;t execute until the promise is resolved.</p>
+				<p>Note that handlers can return a value. Whatever you return will be returned to the next tier of middleware and eventually put into the <code>result</code> property of the ExecResult.</p>
+				<p>If a handler returns a <code>Promise</code>, the next subcommand handler won&#39;t execute until the promise is resolved.</p>
 				<p>For example, this will cause the <code>result</code> property to be equal to <code>ctx.args</code>:</p>
 				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(ctx.args);
@@ -176,29 +188,40 @@ exec({
 				<a href="#help-text" id="help-text" style="color: inherit; text-decoration: none;">
 					<h2>Help Text</h2>
 				</a>
-				<p><code>cli-of-mine</code> generates help-text for you. Different text is shown based on which command receives the <code>--help</code> flag. For example:</p>
-				<pre><code>myapp <span class="hljs-comment">--help</span>
-myapp widgets <span class="hljs-comment">--help</span>
-myapp widgets <span class="hljs-built_in">list</span> <span class="hljs-comment">--help</span></code></pre><p>The above would all display help pages with different options -- the first with globalfor <code>myapp</code>, the second for <code>myapp widgets</code>, the third for <code>myapp widgets list</code>.</p>
-				<p>But there&#39;s more to help-text</p>
+				<p><code>cli-of-mine</code> will intercept <code>--help</code> flags and handle them automatically. When this happens, <em>none</em> of your handlers will be called and the <code>result</code> of the execution will be <code>undefined</code>.</p>
+				<p>Different text is shown based on which command receives the <code>--help</code> flag. For example:</p>
+				<pre><code class="language-bash"><span class="hljs-comment"># displays root help for myapp</span>
+myapp --<span class="hljs-built_in">help</span>
+
+<span class="hljs-comment"># displays help for "widgets" command</span>
+myapp widgets --<span class="hljs-built_in">help</span>
+
+<span class="hljs-comment"># displays help for "list" subcommand</span>
+myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
+				<p>You can disable this functionality by setting <code>generateHelp: false</code> in your ExecConfig.</p>
 				<a href="#faq" id="faq" style="color: inherit; text-decoration: none;">
 					<h2>FAQ</h2>
 				</a>
-				<p><strong>Q: What prompted you to create cli-of-mine?</strong></p>
-				<p>When I was working on a Node CLI application, <a href="https://github.com/luketurner/repost">repost</a>, one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn&#39;t use classes or Typescript.</p>
-				<p>Most existing CLI libraries violate at least one of those criteria.</p>
-				<p>The best library I found was <code>command-line-args</code>, which is great, but requires boilerplate code. So I took that boilerplate and made a &quot;framework&quot;.</p>
+				<p><strong>Q: Is there an @types/cli-of-mine package?</strong></p>
+				<p>No -- <code>cli-of-mine</code> is written in Typescript and includes the type definitions bundled in the package. No additional <code>@types</code> are needed.</p>
 				<p><strong>Q: Why does my application have to use your special console?</strong></p>
 				<p><code>cli-of-mine</code> has a goal of &quot;Capturing All I/O.&quot; But, it also has a strict &quot;No Global Changes&quot; rule and that applies to changing the <code>global.console</code> object.</p>
 				<p>The only way we can capture all IO without global changes, is to allow our applications to be configured with a custom logger. Therefore, <code>cli-of-mine</code> gives us the tools to do that.</p>
 				<p>If you don&#39;t care about global changes, your handler can assign the console for global use with:</p>
 				<pre><code class="language-js">global.console = ctx.console;</code></pre>
+				<p><strong>Q: What prompted you to create cli-of-mine?</strong></p>
+				<p>When I was working on a Node CLI application, <a href="https://github.com/luketurner/repost">repost</a>, one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn&#39;t use classes or Typescript.</p>
+				<p>Most existing CLI libraries violate at least one of those criteria.</p>
+				<p>The best library I found was <code>command-line-args</code>, which is great. I ended up writing more and more &quot;frameworky boilerplate&quot; around that library, simplifying usage for the most common use-cases, and this is what I ended up with.</p>
 				<p><strong>Q: When should I <em>not</em> use cli-of-mine?</strong></p>
 				<ul>
 					<li>You just want to parse arguments and you don&#39;t like inversion of control. In that case, try <code>command-line-args</code> or <code>minimist</code> instead.</li>
 					<li>You want <em>all</em> the batteries included. In that case, there are some much larger frameworks like <code>oclif</code> and <code>yargs</code> that might be able to help you.</li>
 					<li>You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (But, it&#39;s freakin&#39; simple. You can fork it and understand the code in an hour.)</li>
+					<li>You use non-utf8 encodings. (For now, <code>cli-of-mine</code> works best with utf8 encoded streams.)</li>
 				</ul>
+				<hr>
+				<p>Copyright 2019 Luke Turner - Published under the MIT License.</p>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -236,19 +259,25 @@ myapp widgets <span class="hljs-built_in">list</span> <span class="hljs-comment"
 						<a href="interfaces/optiondefinition.html" class="tsd-kind-icon">Option<wbr>Definition</a>
 					</li>
 					<li class=" tsd-kind-interface">
+						<a href="interfaces/parsedcommand.html" class="tsd-kind-icon">Parsed<wbr>Command</a>
+					</li>
+					<li class=" tsd-kind-interface">
 						<a href="interfaces/userdata.html" class="tsd-kind-icon">User<wbr>Data</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#argv" class="tsd-kind-icon">Argv</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#composedmiddleware" class="tsd-kind-icon">Composed<wbr>Middleware</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#example" class="tsd-kind-icon">Example</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#exechandler" class="tsd-kind-icon">Exec<wbr>Handler</a>
+						<a href="globals.html#exitcode" class="tsd-kind-icon">Exit<wbr>Code</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
-						<a href="globals.html#exitcode" class="tsd-kind-icon">Exit<wbr>Code</a>
+						<a href="globals.html#handler" class="tsd-kind-icon">Handler</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#handlercallback" class="tsd-kind-icon">Handler<wbr>Callback</a>
@@ -260,10 +289,25 @@ myapp widgets <span class="hljs-built_in">list</span> <span class="hljs-comment"
 						<a href="globals.html#inputstream" class="tsd-kind-icon">Input<wbr>Stream</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#middleware" class="tsd-kind-icon">Middleware</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#middlewarecallback" class="tsd-kind-icon">Middleware<wbr>Callback</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#outputstream" class="tsd-kind-icon">Output<wbr>Stream</a>
 					</li>
 					<li class=" tsd-kind-function">
+						<a href="globals.html#composemiddlewares" class="tsd-kind-icon">compose<wbr>Middlewares</a>
+					</li>
+					<li class=" tsd-kind-function">
 						<a href="globals.html#exec" class="tsd-kind-icon">exec</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#parseargv" class="tsd-kind-icon">parse<wbr>Argv</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#parsecommand" class="tsd-kind-icon">parse<wbr>Command</a>
 					</li>
 				</ul>
 			</nav>

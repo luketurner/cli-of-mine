@@ -13,7 +13,7 @@ What's it solve for you?
 - Converting the metadata you provide into nice-looking help text with [command-line-usage](https://github.com/75lb/command-line-usage)
 - Handling execution errors.
 
-The goal is to make it easy to add a CLI to your app, without the CLI dictating the way the app should work.
+See the [online documentation](https://luketurner.org/cli-of-mine) for API reference information.
 
 # Getting Started
 
@@ -51,11 +51,30 @@ Also:
 
 - _config_ - A configuration option for `cli-of-mine`. Provided by the developer, not the user.
 
+# Help Text
+
+`cli-of-mine` will intercept `--help` flags and handle them automatically. When this happens, _none_ of your handlers will be called and the `result` of the execution will be `undefined`.
+
+Different text is shown based on which command receives the `--help` flag. For example:
+
+```bash
+# displays root help for myapp
+myapp --help
+
+# displays help for "widgets" command
+myapp widgets --help
+
+# displays help for "list" subcommand
+myapp widgets list --help
+```
+
+You can disable this functionality by setting `generateHelp: false` in your ExecConfig.
+
 # Handlers
 
-`cli-of-mine` requires you to specify "handlers" to describe the _implementation_ of your CLI commands. Then, it will construct an execution context and call the appropriate handlers for the commands the user asked for.
+`cli-of-mine` requires you to specify **handlers**, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.
 
-Handler functions are _middlewares_ that get called with two arguments: a `context` object (see [HandlerContext](#HandlerContext)) and a `next` function. Handlers are mostly used to:
+Handlers are middlewares that get called with two arguments: a `context` object (see [HandlerContext](#HandlerContext)) and a `next` function. Handlers are mostly used to:
 
 1. Execute your application logic for each command.
 2. Provide shared context for subcommand handlers.
@@ -71,7 +90,13 @@ function handler(ctx, next) {
 }
 ```
 
-Note that handlers can return a value. `cli-of-mine` doesn't care what you return, but it'll put the value into the `result` property of the object resolved by `exec()`. If a handler returns a `Promise`, the next subcommand handler won't execute until the promise is resolved.
+## Handler Results
+
+Handlers can return a value of any type. This provides a way for handlers to communicate with the code that called `exec`.
+
+Whatever they return will be returned to the next tier of middleware and eventually put into the `result` property of the ExecResult.
+
+If a handler returns a `Promise`, the next subcommand handler won't execute until the promise is resolved.
 
 For example, this will cause the `result` property to be equal to `ctx.args`:
 
@@ -81,28 +106,57 @@ function handler(ctx, next) {
 }
 ```
 
-In addition, if your command has subcommands, your handler **must choose when to relinquish control to the next handler** by calling `next()` (which returns a Promise). For example:
+## Subcommands
+
+`cli-of-mine` is designed to support arbitrarily nested levels of subcommands using a **middleware pattern** inspired by frameworks like Express. This allows you to handle options at every subcommand level.
+
+The special thing about middlewares is that your handler **must choose when to relinquish control to the next handler** by calling `next()` (which returns a Promise). For example:
 
 ```js
 function handler(ctx, next) {
   // things to do before subcommand starts
 
+  // next() runs the subcommand's handler
   return next().then(result => {
     // things to do after subcommand is finished
   });
 }
 ```
 
-It's important to note, you cannot provide arguments to `next()`. If you want to some data to be available to subcommands, you should assign it to the `ctx.data` object, which `cli-of-mine` reserves for applications to use however they want.
+To "abort" the middleware chain, you can throw an error, or simply not call `next()`.
 
-For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished. The `async`/`await` syntax is used in this and remaining examples to improve readability.
+Your final handler (the "controller" in Express parlance) can call `next` if it wants, but it doesn't have to. If it does, the `next` is a no-op.
+
+### Subcommand Options
+
+Each "level" of command/subcommand specifies its own set of options. The handler is only provided the options relevant to that specific subcommand, not the ones before or after it.
+
+For example, assume `widgets` is a subcommand of your application and `list` is a subcommand of `widgets` -- so users can run `myapp widgets list`.
+
+If someone runs: `myapp -v widgets list --filter green`, then the options will be doled out like so:
+
+1. The root handler is given the `-v` argument.
+2. The `widgets` handler is given no arguments.
+3. The `list` handler is given the `--filter green` argument.
+
+If the `list` handler actually cares about the `-v` argument, the root handler has to give it that information explicitly using `ctx.data` (see below).
+
+### Subcommands Sharing Data
+
+You cannot provide arguments to `next()`.
+
+If you want to share data between subcommands, you should assign it to the `ctx.data` object, which is reserved for arbitrary handler data.
+
+For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished.
+
+> Note: The `async`/`await` syntax is used in this and remaining examples to improve readability. But good ol' Promise chains work just fine.
 
 ```js
 async function handler(ctx, next) {
   const { args, data } = ctx;
 
-  // initialize dbConn before running subcommand -- assume getDatabaseConnection is part of your application's code
-  data.dbConn = await getDatabaseConnection(args.db);
+  // initialize dbConn before running subcommand
+  data.dbConn = await getFooDatabaseConn(args.db);
 
   const result = await next();
 
@@ -114,18 +168,24 @@ async function handler(ctx, next) {
 }
 ```
 
-### Error Handling
+## Error Handling
 
-Handlers should try to always throw instances of `AppError`, or subclasses thereof. These error classes accept two constructor arguments -- a code and a message. For example:
+Handlers can "buy into" improved error handling by throwing instances of `AppError`. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
+
+For example:
 
 ```js
+const { AppError } = require("cli-of-mine");
+
 throw new AppError(
-  "SERVER_UNAVAILABLE",
-  "The downstream server is unavailable."
+  "SERVER_UNAVAILABLE", // error code
+  "The downstream server is unavailable." // message
 );
 ```
 
-You can also construct an AppError from an existing error:
+Additionally, you can set the optional `processExitCode` property to recommend an exit code to use, should this error become fatal.
+
+You can construct an AppError from an existing error using `fromError`:
 
 ```js
 try {
@@ -135,9 +195,9 @@ try {
 }
 ```
 
-Note that all AppError codes are "namespaced" by prefixing them with `APP_` by default. This allows you to use whatever error codes you want without using the same codes as `cli-of-mine` (or Node itself.)
+### Custom Error Classes
 
-A common use-case is to change that prefix, so you can document error codes more cleanly in your app. You can do so by extending AppError:
+It's recommended that you extend `AppError` to implement your own error class, so you can document error codes more cleanly in your app. For example:
 
 ```js
 class FooError extends AppError {
@@ -151,33 +211,7 @@ try {
 }
 ```
 
-## Nested Subcommands
-
-`cli-of-mine` is designed to support arbitrarily nested levels of subcommands using a **middleware pattern** inspired by frameworks like Express. This allows you to handle options at every subcommand level.
-
-For example, assume `widgets` is a subcommand of your application and `list` is a subcommand of `widgets` -- so users can run `myapp widgets list`.
-
-If someone runs: `myapp -v widgets list --filter green`, then the "middleware chain" will be constructed like so:
-
-1. The root handler is given the `-v` argument.
-2. The `widgets` handler is given no arguments.
-3. The `list` handler is given the `--filter green` argument.
-
-All handlers are given a shared `ctx` object as their third argument. This object is a "grab bag" that can be used for handlers to share application-specific data.
-
-## Help Text
-
-`cli-of-mine` generates help-text for you. Different text is shown based on which command receives the `--help` flag. For example:
-
-```
-myapp --help
-myapp widgets --help
-myapp widgets list --help
-```
-
-The above would all display help pages with different options -- the first with globalfor `myapp`, the second for `myapp widgets`, the third for `myapp widgets list`.
-
-## FAQ
+# FAQ
 
 **Q: Is there an @types/cli-of-mine package?**
 

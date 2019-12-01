@@ -5,7 +5,7 @@ export type Handler = (
   ctx: HandlerContext,
   next: HandlerCallback
 ) => HandlerResult | Promise<HandlerResult>;
-export type HandlerCallback = () => Promise<void>;
+export type HandlerCallback = () => Promise<HandlerResult>;
 
 // Domain type-renames
 // (might want to make these types "better" / more precise)
