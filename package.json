@@ -1,0 +1,40 @@
+{
+  "name": "cli-of-mine",
+  "version": "1.0.0",
+  "description": "A no-fuss command-line framework",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "npm run test -- --watchAll",
+    "docs": "typedoc src",
+    "docs:serve": "npm run docs && http-server ./docs -a localhost",
+    "docs:watch": "nodemon --watch src -e ts,md --exec \"npm run docs:serve\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luketurner/cli-of-mine.git"
+  },
+  "author": "Luke Turner",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/luketurner/cli-of-mine/issues"
+  },
+  "homepage": "https://github.com/luketurner/cli-of-mine#readme",
+  "dependencies": {
+    "command-line-args": "^5.1.1",
+    "command-line-usage": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/command-line-args": "^5.0.0",
+    "@types/command-line-usage": "^5.0.1",
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "http-server": "^0.12.0",
+    "jest": "^24.9.0",
+    "nodemon": "^2.0.1",
+    "ts-jest": "^24.2.0",
+    "typedoc": "^0.15.3",
+    "typescript": "^3.6.0"
+  }
+}

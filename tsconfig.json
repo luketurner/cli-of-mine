@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    // Emitted ES Options
+    "target": "es5",
+    "module": "commonjs",
+    "lib": ["es2017", "es2015.promise", "es2015.collection", "es5"],
+
+    // Output Options
+    "outDir": "./build",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    // Type-Checking Options
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}

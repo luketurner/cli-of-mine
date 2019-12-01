@@ -1,0 +1,9 @@
+{
+  "out": "docs",
+  "readme": "README.md",
+  "exclude": "node_modules",
+  "excludeNotExported": true,
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "mode": "file"
+}

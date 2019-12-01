@@ -1,0 +1,340 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>cli-of-mine</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">cli-of-mine</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1> cli-of-mine</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#cli-of-mine" id="cli-of-mine" style="color: inherit; text-decoration: none;">
+					<h1>cli-of-mine</h1>
+				</a>
+				<blockquote>
+					<p><em>This CLI of mine, I&#39;m gonna let it shine</em></p>
+				</blockquote>
+				<p>This is a no-fuss CLI framework. It solves the CLI stuff, so you can focus on the other stuff.</p>
+				<p>What&#39;s it solve for you?</p>
+				<ul>
+					<li>Parsing and validating command-line arguments.</li>
+					<li>Calling the correct function based on the command a user asked for.</li>
+					<li>Arbitrary nesting of subcommands using an Express-like middleware pattern.</li>
+					<li>Encapsulating all I/O streams for 100% testability -- assuming you use its logging primitives.</li>
+					<li>Converting the metadata you provide into nice-looking help text.</li>
+					<li>Handling errors.</li>
+				</ul>
+				<p>The goal is to make it easy to add a CLI to your app, without the CLI dictating the way the app should work.</p>
+				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
+					<h1>Getting Started</h1>
+				</a>
+				<p>Install <code>cli-of-mine</code> from Github:</p>
+				<pre><code>npm i luketurner/<span class="hljs-keyword">cli</span>-of-mine</code></pre><p>This is the simplest possible CLI app:</p>
+				<pre><code class="language-js"><span class="hljs-keyword">const</span> { exec } = <span class="hljs-built_in">require</span>(<span class="hljs-string">"cli-of-mine"</span>);
+
+exec({
+  <span class="hljs-attr">name</span>: <span class="hljs-string">"my-app"</span>,
+
+  handler(ctx) {
+    ctx.console.log(<span class="hljs-string">"Hello, world!"</span>);
+  }
+});</code></pre>
+				<p>All configuration is done by passing options into the <code>exec()</code> function. It returns a <code>Promise</code> that resolves when the execution is finished. See <a href="#exec">exec</a> below for more details.</p>
+				<a href="#handlers" id="handlers" style="color: inherit; text-decoration: none;">
+					<h2>Handlers</h2>
+				</a>
+				<p><code>cli-of-mine</code> requires you to specify &quot;handlers&quot; to describe the <em>implementation</em> of your CLI commands. Then, it will construct an execution context and call the appropriate handlers for the commands the user asked for.</p>
+				<p>Handler functions are <em>middlewares</em> that get called with two arguments: a <code>context</code> object (see <a href="#HandlerContext">HandlerContext</a>) and a <code>next</code> function. Handlers are mostly used to:</p>
+				<ol>
+					<li>Execute your application logic for each command.</li>
+					<li>Provide shared context for subcommand handlers.</li>
+				</ol>
+				<p>The first use-case, executing business logic, is carried out by the final command in the chain. (The &quot;controller&quot;, so to speak.)</p>
+				<p>This is a very simple example that just logs the CLI arguments it received:</p>
+				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-keyword">const</span> { args, <span class="hljs-built_in">console</span> } = ctx;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Got args:"</span>, args);
+}</code></pre>
+				<p>Note that handlers can return a value. <code>cli-of-mine</code> doesn&#39;t care what you return, but it&#39;ll put the value into the <code>result</code> property of the object resolved by <code>exec()</code>. If a handler returns a <code>Promise</code>, the next subcommand handler won&#39;t execute until the promise is resolved.</p>
+				<p>For example, this will cause the <code>result</code> property to be equal to <code>ctx.args</code>:</p>
+				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(ctx.args);
+}</code></pre>
+				<p>In addition, if your command has subcommands, your handler <strong>must choose when to relinquish control to the next handler</strong> by calling <code>next()</code> (which returns a Promise). For example:</p>
+				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-comment">// things to do before subcommand starts</span>
+
+  <span class="hljs-keyword">return</span> next().then(<span class="hljs-function"><span class="hljs-params">result</span> =&gt;</span> {
+    <span class="hljs-comment">// things to do after subcommand is finished</span>
+  });
+}</code></pre>
+				<p>It&#39;s important to note, you cannot provide arguments to <code>next()</code>. If you want to some data to be available to subcommands, you should assign it to the <code>ctx.data</code> object, which <code>cli-of-mine</code> reserves for applications to use however they want.</p>
+				<p>For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished. The <code>async</code>/<code>await</code> syntax is used in this and remaining examples to improve readability.</p>
+				<pre><code class="language-js"><span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
+  <span class="hljs-keyword">const</span> { args, data } = ctx;
+
+  <span class="hljs-comment">// initialize dbConn before running subcommand -- assume getDatabaseConnection is part of your application's code</span>
+  data.dbConn = <span class="hljs-keyword">await</span> getDatabaseConnection(args.db);
+
+  <span class="hljs-keyword">const</span> result = <span class="hljs-keyword">await</span> next();
+
+  <span class="hljs-comment">// Clean up dbConn after subcommand is done</span>
+  <span class="hljs-keyword">await</span> data.dbConn.close();
+
+  <span class="hljs-comment">// make sure to return the subcommand's result if you care about it.</span>
+  <span class="hljs-keyword">return</span> result;
+}</code></pre>
+				<a href="#error-handling" id="error-handling" style="color: inherit; text-decoration: none;">
+					<h3>Error Handling</h3>
+				</a>
+				<p>Handlers should try to always throw instances of <code>AppError</code>, or subclasses thereof. These error classes accept two constructor arguments -- a code and a message. For example:</p>
+				<pre><code class="language-js"><span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> AppError(
+  <span class="hljs-string">"SERVER_UNAVAILABLE"</span>,
+  <span class="hljs-string">"The downstream server is unavailable."</span>
+);</code></pre>
+				<p>You can also construct an AppError from an existing error:</p>
+				<pre><code class="language-js"><span class="hljs-keyword">try</span> {
+  <span class="hljs-comment">// do stuff</span>
+} <span class="hljs-keyword">catch</span> (e) {
+  <span class="hljs-keyword">throw</span> AppError.fromError(e);
+}</code></pre>
+				<p>Note that all AppError codes are &quot;namespaced&quot; by prefixing them with <code>APP_</code> by default. This allows you to use whatever error codes you want without using the same codes as <code>cli-of-mine</code> (or Node itself.)</p>
+				<p>A common use-case is to change that prefix, so you can document error codes more cleanly in your app. You can do so by extending AppError:</p>
+				<pre><code class="language-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FooError</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">AppError</span> </span>{
+  code_prefix = <span class="hljs-string">"FOO_"</span>;
+}
+
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> FooError(<span class="hljs-string">"MY_CODE"</span>, <span class="hljs-string">"my message"</span>);
+} <span class="hljs-keyword">catch</span> (e) {
+  <span class="hljs-built_in">console</span>.log(e.code); <span class="hljs-comment">// logs FOO_MY_CODE</span>
+}</code></pre>
+				<a href="#nested-subcommands" id="nested-subcommands" style="color: inherit; text-decoration: none;">
+					<h2>Nested Subcommands</h2>
+				</a>
+				<p><code>cli-of-mine</code> is designed to support arbitrarily nested levels of subcommands using a <strong>middleware pattern</strong> inspired by frameworks like Express. This allows you to handle options at every subcommand level.</p>
+				<p>For example, assume <code>widgets</code> is a subcommand of your application and <code>list</code> is a subcommand of <code>widgets</code> -- so users can run <code>myapp widgets list</code>.</p>
+				<p>If someone runs: <code>myapp -v widgets list --filter green</code>, then the &quot;middleware chain&quot; will be constructed like so:</p>
+				<ol>
+					<li>The root handler is given the <code>-v</code> argument.</li>
+					<li>The <code>widgets</code> handler is given no arguments.</li>
+					<li>The <code>list</code> handler is given the <code>--filter green</code> argument.</li>
+				</ol>
+				<p>All handlers are given a shared <code>ctx</code> object as their third argument. This object is a &quot;grab bag&quot; that can be used for handlers to share application-specific data.</p>
+				<a href="#help-text" id="help-text" style="color: inherit; text-decoration: none;">
+					<h2>Help Text</h2>
+				</a>
+				<p><code>cli-of-mine</code> generates help-text for you. Different text is shown based on which command receives the <code>--help</code> flag. For example:</p>
+				<pre><code>myapp <span class="hljs-comment">--help</span>
+myapp widgets <span class="hljs-comment">--help</span>
+myapp widgets <span class="hljs-built_in">list</span> <span class="hljs-comment">--help</span></code></pre><p>The above would all display help pages with different options -- the first with globalfor <code>myapp</code>, the second for <code>myapp widgets</code>, the third for <code>myapp widgets list</code>.</p>
+				<p>But there&#39;s more to help-text</p>
+				<a href="#faq" id="faq" style="color: inherit; text-decoration: none;">
+					<h2>FAQ</h2>
+				</a>
+				<p><strong>Q: What prompted you to create cli-of-mine?</strong></p>
+				<p>When I was working on a Node CLI application, <a href="https://github.com/luketurner/repost">repost</a>, one of my goals was to create an application that controls all its inputs and outputs, has no global state or singletons, and doesn&#39;t use classes or Typescript.</p>
+				<p>Most existing CLI libraries violate at least one of those criteria.</p>
+				<p>The best library I found was <code>command-line-args</code>, which is great, but requires boilerplate code. So I took that boilerplate and made a &quot;framework&quot;.</p>
+				<p><strong>Q: Why does my application have to use your special console?</strong></p>
+				<p><code>cli-of-mine</code> has a goal of &quot;Capturing All I/O.&quot; But, it also has a strict &quot;No Global Changes&quot; rule and that applies to changing the <code>global.console</code> object.</p>
+				<p>The only way we can capture all IO without global changes, is to allow our applications to be configured with a custom logger. Therefore, <code>cli-of-mine</code> gives us the tools to do that.</p>
+				<p>If you don&#39;t care about global changes, your handler can assign the console for global use with:</p>
+				<pre><code class="language-js">global.console = ctx.console;</code></pre>
+				<p><strong>Q: When should I <em>not</em> use cli-of-mine?</strong></p>
+				<ul>
+					<li>You just want to parse arguments and you don&#39;t like inversion of control. In that case, try <code>command-line-args</code> or <code>minimist</code> instead.</li>
+					<li>You want <em>all</em> the batteries included. In that case, there are some much larger frameworks like <code>oclif</code> and <code>yargs</code> that might be able to help you.</li>
+					<li>You want a well-supported library with low bus-factor. This is a personal project and I do not commit to long-term support. (But, it&#39;s freakin&#39; simple. You can fork it and understand the code in an hour.)</li>
+				</ul>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+					<li class=" tsd-kind-class">
+						<a href="classes/apperror.html" class="tsd-kind-icon">App<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-class">
+						<a href="classes/executionerror.html" class="tsd-kind-icon">Execution<wbr>Error</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/cliarguments.html" class="tsd-kind-icon">CLIArguments</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/commanddefinition.html" class="tsd-kind-icon">Command<wbr>Definition</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/execconfig.html" class="tsd-kind-icon">Exec<wbr>Config</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/execresult.html" class="tsd-kind-icon">Exec<wbr>Result</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/handlercontext.html" class="tsd-kind-icon">Handler<wbr>Context</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/optiondefinition.html" class="tsd-kind-icon">Option<wbr>Definition</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="interfaces/userdata.html" class="tsd-kind-icon">User<wbr>Data</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#argv" class="tsd-kind-icon">Argv</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#example" class="tsd-kind-icon">Example</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#exechandler" class="tsd-kind-icon">Exec<wbr>Handler</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#exitcode" class="tsd-kind-icon">Exit<wbr>Code</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#handlercallback" class="tsd-kind-icon">Handler<wbr>Callback</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#handlerresult" class="tsd-kind-icon">Handler<wbr>Result</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#inputstream" class="tsd-kind-icon">Input<wbr>Stream</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#outputstream" class="tsd-kind-icon">Output<wbr>Stream</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="globals.html#exec" class="tsd-kind-icon">exec</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
