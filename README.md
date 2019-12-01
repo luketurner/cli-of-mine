@@ -6,14 +6,14 @@ This is a no-fuss CLI framework. It solves the CLI stuff, so you can focus on th
 
 What's it solve for you?
 
-- Parsing and validating command-line arguments with [command-line-args](https://github.com/75lb/command-line-args).
+- Parsing and validating command-line arguments with [command-line-args].
 - Calling the correct function based on the command a user asked for.
 - Arbitrary nesting of subcommands using an Express-like middleware pattern.
 - Encapsulating all I/O streams for 100% testability -- assuming you use its logging primitives.
-- Converting the metadata you provide into nice-looking help text with [command-line-usage](https://github.com/75lb/command-line-usage)
+- Converting the metadata you provide into nice-looking help text with [command-line-usage].
 - Handling execution errors.
 
-See the [online documentation](https://luketurner.org/cli-of-mine) for API reference information.
+See the [online docs] for API reference information.
 
 # Getting Started
 
@@ -37,19 +37,18 @@ exec({
 });
 ```
 
-All configuration is done by passing options into the `exec()` function. It returns a `Promise` that resolves when the execution is finished. See the [online API documentation](https://luketurner.org/cli-of-mine) for more details.
+All configuration is done by passing options into the [exec] function. It returns a `Promise` that resolves when the execution is finished.
 
-**Terminology Note**
+For more information on the config `exec` supports, check out the [exec] and [ExecConfig] docs.
+
+## Terminology Note
 
 The following terms have a specific meaning when used in this documentation.
 
-- _argument_ - A single command-line argument.
+- _config_ - A configuration option for `cli-of-mine`. Provided by the developer, not the user.
+- _argument_ - A single command-line argument, provided by the user.
 - _command_ - An argument that matches the name of a command definition.
 - _option_ - An argument that starts with a `-` and might have one or more values, e.g. `--force` or `--file foo.txt`.
-
-Also:
-
-- _config_ - A configuration option for `cli-of-mine`. Provided by the developer, not the user.
 
 # Help Text
 
@@ -68,13 +67,17 @@ myapp widgets --help
 myapp widgets list --help
 ```
 
-You can disable this functionality by setting `generateHelp: false` in your ExecConfig.
+You can disable this functionality by setting `generateHelp: false` in your [ExecConfig].
 
 # Handlers
 
 `cli-of-mine` requires you to specify **handlers**, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.
 
-Handlers are middlewares that get called with two arguments: a `context` object (see [HandlerContext](#HandlerContext)) and a `next` function. Handlers are mostly used to:
+Handlers are functions that get called with two arguments: a `context` object (see [HandlerContext]) and a `next` function (see [HandlerCallback]). See the [Handler] interface for more details about supported types.
+
+You can ignore the `next` function unless you want to support subcommands. See [Subcommands].
+
+Handlers are mostly used to:
 
 1. Execute your application logic for each command.
 2. Provide shared context for subcommand handlers.
@@ -92,13 +95,13 @@ function handler(ctx, next) {
 
 ## Handler Results
 
-Handlers can return a value of any type. This provides a way for handlers to communicate with the code that called `exec`.
+Handlers can return a value of any type. This provides a way for handlers to communicate with the code that called [exec].
 
-Whatever they return will be returned to the next tier of middleware and eventually put into the `result` property of the ExecResult.
+Whatever they return will be returned to the next tier of middleware and eventually put into the `result` property of the [ExecResult].
 
-If a handler returns a `Promise`, the next subcommand handler won't execute until the promise is resolved.
+Also, if a handler returns a `Promise`, the next subcommand handler won't execute until the promise is resolved.
 
-For example, this will cause the `result` property to be equal to `ctx.args`:
+For example, this will cause the `ExecResult.result` property to be equal to `ctx.args`:
 
 ```js
 function handler(ctx, next) {
@@ -170,7 +173,7 @@ async function handler(ctx, next) {
 
 ## Error Handling
 
-Handlers can "buy into" improved error handling by throwing instances of `AppError`. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
+Handlers can "buy into" improved error handling by throwing instances of [AppError]. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
 
 For example:
 
@@ -197,7 +200,7 @@ try {
 
 ### Custom Error Classes
 
-It's recommended that you extend `AppError` to implement your own error class, so you can document error codes more cleanly in your app. For example:
+It's recommended that you extend [AppError] to implement your own error class, so you can document error codes more cleanly in your app. For example:
 
 ```js
 class FooError extends AppError {
@@ -210,6 +213,14 @@ try {
   console.log(e.code); // logs FOO_MY_CODE
 }
 ```
+
+## Catching Errors
+
+By default, the [exec] function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.
+
+If you wish to disable this behavior, set `catchErrors: false` in your [ExecConfig].
+
+When `catchErrors` is false, the Promise returned by [exec] will possibly reject with an [ExecutionError], that you can inspect and handle in your application.
 
 # FAQ
 
@@ -247,3 +258,17 @@ The best library I found was `command-line-args`, which is great. I ended up wri
 ---
 
 Copyright 2019 Luke Turner - Published under the MIT License.
+
+[command-line-args]: https://github.com/75lb/command-line-args
+[command-line-usage]: https://github.com/75lb/command-line-usage
+[online docs]: https://luketurner.org/cli-of-mine
+[handlercontext]: interfaces/handlercontext.html
+[commanddefinition]: interfaces/commanddefinition.html
+[exec]: globals.html#exec
+[execconfig]: interfaces/execconfig.html
+[execresult]: interfaces/execresult.html
+[apperror]: classes/apperror.html
+[executionerror]: classes/executionerror.html
+[handler]: interfaces/handler.html
+[handlercallback]: interfaces/handlercallback.html
+[subcommands]: #subcommands
