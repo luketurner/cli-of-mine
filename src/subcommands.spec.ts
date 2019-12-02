@@ -36,7 +36,6 @@ describe("cli-of-mine", () => {
   });
 
   it("should pass args to subcommands", async () => {
-    execConfig.subcommands;
     await testCLI([
       "--foo",
       "bar",
@@ -55,6 +54,17 @@ describe("cli-of-mine", () => {
     });
     expect(subsubhandler.mock.calls[0][0]).toMatchObject({
       args: { baz: "zab" }
+    });
+  });
+
+  it("should allow subcommands to share data using ctx.data", async () => {
+    handler.mockImplementation((ctx, next) => {
+      ctx.data.testProperty = "test-value";
+      return next();
+    });
+    await testCLI(["testcommand", "subcommand"]);
+    expect(subsubhandler.mock.calls[0][0]).toMatchObject({
+      data: { testProperty: "test-value" }
     });
   });
 });
