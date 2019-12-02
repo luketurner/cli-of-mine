@@ -20,6 +20,32 @@ export interface HandlerCallback {
   (): Promise<HandlerResult>;
 }
 
+export interface ExecConfig
+  extends Omit<Omit<Partial<ValidExecConfig>, "options">, "subcommands"> {
+  // required fields
+  name: string;
+
+  options?: OptionDefinition[];
+  subcommands?: CommandDefinition[];
+}
+
+export interface CommandDefinition
+  extends Omit<
+    Omit<Partial<ValidCommandDefinition>, "options">,
+    "subcommands"
+  > {
+  // required fields
+  name: string;
+
+  options?: OptionDefinition[];
+  subcommands?: CommandDefinition[];
+}
+
+export interface OptionDefinition extends Partial<ValidOptionDefinition> {
+  // required fields
+  name: string;
+}
+
 /** @hidden */
 export interface ValidExecConfig {
   name: string;
@@ -36,42 +62,26 @@ export interface ValidExecConfig {
   examples: Example[];
 
   handler: Handler;
-  options: OptionDefinition[];
-  subcommands: CommandDefinition[];
+  options: ValidOptionDefinition[];
+  subcommands: ValidCommandDefinition[];
 }
 
-export interface ExecConfig extends Partial<ValidExecConfig> {
-  // These fields are the only required ones
-  name: string;
-  handler: Handler;
-}
-
-/**
- * A CommandDefintiion contains a complete description of a single command
- * that's supported by your application -- including supported arguments
- * and subcommands, if any.
- *
- * The `name` and `handler` fields are required.
- */
-export interface CommandDefinition {
+/** @hidden */
+export interface ValidCommandDefinition {
   name: string;
   // alias: string[];
-  handler?: Handler;
+  handler: Handler;
 
-  description?: string;
-  details?: string;
-  examples?: Example[];
+  description: string;
+  details: string;
+  examples: Example[];
 
-  options?: OptionDefinition[];
-  subcommands?: CommandDefinition[];
+  options: ValidOptionDefinition[];
+  subcommands: ValidCommandDefinition[];
 }
 
-/**
- * An OptionDefinition describes a supported option for your application/command.
- *
- * Parsing these is handled by [command-line-args](https://github.com/75lb/command-line-args).
- */
-export interface OptionDefinition {
+/** @hidden */
+export interface ValidOptionDefinition {
   name: string;
   alias?: string;
   description?: string;

@@ -1,5 +1,13 @@
 import { CLIError } from './error';
-import { ExecConfig, ValidExecConfig } from './interfaces';
+import {
+  CommandDefinition,
+  ExecConfig,
+  Handler,
+  OptionDefinition,
+  ValidCommandDefinition,
+  ValidExecConfig,
+  ValidOptionDefinition,
+} from './interfaces';
 
 /**
  * Config module!
@@ -8,7 +16,8 @@ import { ExecConfig, ValidExecConfig } from './interfaces';
  *
  * @param options
  */
-function ensureHelpOption(options: any) {
+function ensureHelpOption(config: any) {
+  const { options } = config;
   for (const { name } of options) {
     if (name === "help") return;
   }
@@ -20,41 +29,71 @@ function ensureHelpOption(options: any) {
   });
 }
 
+const identityHandler: Handler = async (_ctx, next) => next();
+
 /**
  * Validates the config object
  * @hidden
  */
 export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
   // TODO
+  const generateHelp = booleanDefault(
+    config.generateHelp,
+    true,
+    "generateHelp"
+  );
+
+  const validateOption = (option: OptionDefinition): ValidOptionDefinition => {
+    const validOption: ValidOptionDefinition = option;
+    return validOption;
+  };
+
+  const validateCommand = (
+    command: CommandDefinition
+  ): ValidCommandDefinition => {
+    const validCommand: ValidCommandDefinition = {
+      name: command.name,
+      handler: command.handler || identityHandler,
+      description: command.description || "",
+      details: command.details || "",
+      examples: command.examples || [],
+
+      options: (command.options || []).map(validateOption),
+      subcommands: (command.subcommands || []).map(validateCommand)
+    };
+
+    if (generateHelp) {
+      // TODO -- better way to handle this
+      ensureHelpOption(validCommand);
+    }
+    return validCommand;
+  };
 
   if (!config) throw new Error("Must pass an object to exec()");
-
-  const { name, handler } = config;
-
-  if (!name) throw new Error("Must specify ExecConfig.name");
-  if (!handler) throw new Error("Must specify ExecConfig.handler");
+  if (!config.name) throw new Error("Must specify ExecConfig.name");
 
   const validConfig: ValidExecConfig = {
-    name,
-    handler,
+    name: config.name,
+    handler: config.handler || identityHandler,
 
     argv: config.argv || process.argv,
     stdin: config.stdin || process.stdin,
     stdout: config.stdout || process.stdout,
     stderr: config.stderr || process.stderr,
 
-    generateHelp: booleanDefault(config.generateHelp, true, "generateHelp"),
+    generateHelp,
     catchErrors: booleanDefault(config.catchErrors, true, "catchErrors"),
 
     description: config.description || "",
     examples: config.examples || [],
 
-    options: config.options || [],
-    subcommands: config.subcommands || []
+    options: (config.options || []).map(validateOption),
+    subcommands: (config.subcommands || []).map(validateCommand)
   };
 
-  if (validConfig.generateHelp) {
-    ensureHelpOption(validConfig.options);
+  if (generateHelp) {
+    // TODO -- perhaps there's a better way to handle this
+    ensureHelpOption(validConfig);
   }
 
   return validConfig;

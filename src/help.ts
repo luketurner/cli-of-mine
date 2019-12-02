@@ -1,5 +1,6 @@
-import * as commandLineUsage from "command-line-usage";
-import { CommandDefinition } from "./interfaces";
+import * as commandLineUsage from 'command-line-usage';
+
+import { CommandDefinition } from './interfaces';
 
 /**
  * @hidden
@@ -23,10 +24,10 @@ function descriptionSection(header: any, content: any) {
   return { header, content };
 }
 
-function exampleSection(config: any) {
+function exampleSection(examples: any) {
   return {
     header: "Examples",
-    content: config.examples
+    content: examples
   };
 }
 
