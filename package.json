@@ -2,7 +2,7 @@
   "name": "cli-of-mine",
   "version": "1.0.0",
   "description": "A no-fuss command-line framework",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
     "build": "tsc",
     "test": "jest",
