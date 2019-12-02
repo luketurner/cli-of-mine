@@ -25,7 +25,7 @@ export interface ValidExecConfig {
   name: string;
   argv: Argv;
 
-  stdin: InputStream | "capture";
+  stdin: InputStream | string;
   stdout: OutputStream | "capture";
   stderr: OutputStream | "capture";
 

@@ -1,11 +1,6 @@
-import { Readable, Writable } from "stream";
-import { OutputStream, InputStream } from "./interfaces";
+import { Readable, Writable } from 'stream';
 
-interface StdIOConfig {
-  stdin?: "capture" | InputStream;
-  stdout?: "capture" | OutputStream;
-  stderr?: "capture" | OutputStream;
-}
+import { InputStream, OutputStream, ValidExecConfig } from './interfaces';
 
 interface StdIO {
   stdin: InputStream;
@@ -19,7 +14,7 @@ type StdIOCallback = (stdio: StdIO) => Promise<any>;
  * @hidden
  */
 // TODO -- refactor this function
-export async function withStdIO(config: StdIOConfig, fn: StdIOCallback) {
+export async function withStdIO(config: ValidExecConfig, fn: StdIOCallback) {
   const { stdin, stdout, stderr } = config;
 
   const stdinStream =
@@ -69,7 +64,7 @@ export async function withStdIO(config: StdIOConfig, fn: StdIOCallback) {
  */
 function getReadableStream(...content: string[]): Readable {
   const readable = new Readable();
-  for (const c in content) readable.push(c, "utf8");
+  for (const c of content) readable.push(c, "utf8");
   readable.push(null);
   return readable;
 }
