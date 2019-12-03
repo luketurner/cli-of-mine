@@ -19,10 +19,10 @@ See the [online docs] for API reference information.
 
 # Getting Started
 
-Install `cli-of-mine` from Github:
+Install `cli-of-mine` from npm:
 
-```
-npm i luketurner/cli-of-mine
+```bash
+npm i cli-of-mine
 ```
 
 This is the simplest possible CLI app:
