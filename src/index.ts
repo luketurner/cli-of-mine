@@ -16,6 +16,8 @@ import { ComposedMiddleware, composeMiddlewares, Middleware, MiddlewareCallback 
 import { parseArgv, ParsedCommand } from './parse';
 import { withStdIO } from './stdio';
 
+export { AppError } from "./error";
+
 async function catchErrorHandler(
   ctx: HandlerContext,
   next: HandlerCallback
