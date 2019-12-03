@@ -1,6 +1,6 @@
 {
   "name": "cli-of-mine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A no-fuss command-line framework",
   "main": "build/index.js",
   "scripts": {
