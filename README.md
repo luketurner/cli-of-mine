@@ -1,6 +1,6 @@
 # cli-of-mine
 
-[docs](https://luketurner.org/cli-of-mine) - [github](https://github.com/luketurner) - [npm](https://www.npmjs.com/package/cli-of-mine)
+[docs](https://luketurner.org/cli-of-mine) - [github](https://github.com/luketurner/cli-of-mine) - [npm](https://www.npmjs.com/package/cli-of-mine)
 
 > _"This CLI of mine, I'm gonna let it shine!"_
 
