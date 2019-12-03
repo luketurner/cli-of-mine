@@ -59,6 +59,7 @@ export interface ValidExecConfig {
   generateHelp: boolean;
 
   description: string;
+  details: string;
   examples: Example[];
 
   handler: Handler;
@@ -100,6 +101,7 @@ export interface HandlerContext {
   data: UserData;
 
   args: CLIArguments;
+  subcommand?: ValidCommandDefinition;
 
   console: Console;
 

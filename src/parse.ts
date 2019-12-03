@@ -1,9 +1,9 @@
 import * as commandLineArgs from 'command-line-args';
 
-import { Argv, CLIArguments, CommandDefinition, OptionDefinition, ValidExecConfig } from './interfaces';
+import { Argv, CLIArguments, ValidCommandDefinition, ValidExecConfig, ValidOptionDefinition } from './interfaces';
 
 export interface ParsedCommand {
-  command: CommandDefinition;
+  command: ValidCommandDefinition;
   args: CLIArguments;
 }
 
@@ -14,7 +14,7 @@ export function parseArgv(config: ValidExecConfig): ParsedCommand[] {
 
 /** @hidden */
 export function parseCommand(
-  command: CommandDefinition,
+  command: ValidCommandDefinition,
   argv: Argv
 ): ParsedCommand[] {
   const [args, remainingArgv] = parseOptions(command.options, argv);
@@ -31,7 +31,7 @@ export function parseCommand(
 }
 
 function parseOptions(
-  options: OptionDefinition[] | undefined,
+  options: ValidOptionDefinition[] | undefined,
   argv: Argv
 ): [CLIArguments, Argv] {
   const args = commandLineArgs(options || [], {
@@ -45,9 +45,9 @@ function parseOptions(
 }
 
 function findCommand(
-  subcommands: CommandDefinition[] | undefined,
+  subcommands: ValidCommandDefinition[] | undefined,
   name: string
-): CommandDefinition | undefined {
+): ValidCommandDefinition | undefined {
   for (const cmd of subcommands || []) {
     if (cmd.name === name) {
       return cmd;
@@ -55,43 +55,3 @@ function findCommand(
   }
   return;
 }
-
-// export function readOptions(options: OptionDefinition[], argv: Argv) {
-//   const args = commandLineArgs(options || [], {
-//     argv,
-//     stopAtFirstUnknown: true
-//   });
-
-//   return { args, argv: args._unknown || [] };
-// }
-
-// /**
-//  * @hidden
-//  */
-// export function parseCommands(config: any, argv: any) {
-//   const args = commandLineArgs(config.options, {
-//     argv,
-//     stopAtFirstUnknown: true
-//   });
-
-//   const cmds = [{ config, args }];
-
-//   const [next, ...rest] = args._unknown || [];
-
-//   if (!next) return cmds;
-
-//   if (!config.subcommands) {
-//     throw new Error(`Unknown argument: ${next}`);
-//   }
-
-//   if (!config.subcommands[next]) {
-//     const allowedCmds = Object.keys(config.subcommands);
-//     throw new Error(
-//       `Unknown subcommand: ${next}. Expected one of: ${allowedCmds.join(", ")}.`
-//     );
-//   }
-
-//   cmds.push(...parseCommands(config.subcommands[next], rest));
-
-//   return cmds;
-// }

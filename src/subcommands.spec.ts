@@ -67,4 +67,16 @@ describe("cli-of-mine", () => {
       data: { testProperty: "test-value" }
     });
   });
+
+  it("should set ctx.subcommand to the CommandDefinition of the user-requested subcommand", async () => {
+    await testCLI(["testcommand"]);
+    expect(handler.mock.calls[0][0]).toMatchObject({
+      subcommand: { name: "testcommand" }
+    });
+  });
+
+  it("should set ctx.subcommand to null if no subcommand was requested", async () => {
+    await testCLI([]);
+    expect(handler.mock.calls[0][0].subcommand).toBeFalsy();
+  });
 });

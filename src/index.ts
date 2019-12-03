@@ -42,9 +42,13 @@ function composeParsedCommandHandlers(
   cmds: ParsedCommand[],
   baseContext: HandlerContext
 ): ComposedMiddleware {
-  const handlerMiddlewares: Middleware[] = cmds.map(({ command, args }) => {
+  const handlerMiddlewares: Middleware[] = cmds.map(({ command, args }, ix) => {
     const handler = getCommandHandler(command);
-    const ctx = { ...baseContext, args };
+    const ctx: HandlerContext = { ...baseContext, args };
+    if (ix + 1 < cmds.length) {
+      ctx.subcommand = cmds[ix + 1].command;
+    }
+
     return async next => handler(ctx, next);
   });
 
