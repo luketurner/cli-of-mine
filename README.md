@@ -69,6 +69,10 @@ myapp widgets list --help
 
 You can disable this functionality by setting `generateHelp: false` in your [ExecConfig].
 
+# Version Text
+
+`cli-of-mine` will intercept `--version` options (_unless_ they are passed to a subcommand) and print version information based on the `version` property of the [ExecConfig]. This behavior can be disabled by setting `generateVersion: false`.
+
 # Handlers
 
 `cli-of-mine` requires you to specify **handlers**, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.
@@ -126,9 +130,18 @@ function handler(ctx, next) {
 }
 ```
 
-To "abort" the middleware chain, you can throw an error, or simply not call `next()`.
-
 Your final handler (the "controller" in Express parlance) can call `next` if it wants, but it doesn't have to. If it does, the `next` is a no-op.
+
+Note that just because subcommands are defined, `cli-of-mine` will not throw errors if no subcommand is specified. Handlers can "enable" this behavior for themselves using the `subcommand` property of [HandlerContext], which indicates which subcommand (if any) the user has requested:
+
+```js
+function handler(ctx, next) {
+  if (!ctx.subcommand) {
+    throw new AppError("BAD_COMMAND", "Must specify command");
+  }
+  return next();
+}
+```
 
 ### Subcommand Options
 
