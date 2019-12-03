@@ -25,6 +25,8 @@ Install `cli-of-mine` from npm:
 npm i cli-of-mine
 ```
 
+> **Node Versions:** `cli-of-mine` is compiled to ES6/ES2015. It's tested with the latest versions of node v8, v10, and v12. Earlier versions may not work.
+
 This is the simplest possible CLI app:
 
 ```js

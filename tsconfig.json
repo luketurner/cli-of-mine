@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // Emitted ES Options
-    "target": "es5",
+    "target": "es6",
     "module": "commonjs",
     "lib": ["es2017", "es2015.promise", "es2015.collection", "es5"],
 
