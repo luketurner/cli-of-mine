@@ -136,7 +136,9 @@ function handler(ctx, next) {
 
 Your final handler (the "controller" in Express parlance) can call `next` if it wants, but it doesn't have to. If it does, the `next` is a no-op.
 
-Note that just because subcommands are defined, `cli-of-mine` will not throw errors if no subcommand is specified. Handlers can "enable" this behavior for themselves using the `subcommand` property of [HandlerContext], which indicates which subcommand (if any) the user has requested:
+### Required Subcommands
+
+Handlers have access to the `subcommand` property of [HandlerContext], which indicates which subcommand (if any) the user has requested. This can be used, for instance, to throw an error if no subcommands are specified:
 
 ```js
 function handler(ctx, next) {
