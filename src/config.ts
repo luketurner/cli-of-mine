@@ -9,13 +9,6 @@ import {
   ValidOptionDefinition,
 } from './interfaces';
 
-/**
- * Config module!
- */
-/**
- *
- * @param options
- */
 function ensureHelpOption(config: any) {
   const { options } = config;
   for (const { name } of options) {
@@ -25,6 +18,19 @@ function ensureHelpOption(config: any) {
   options.push({
     name: "help",
     description: "Prints this usage guide.",
+    type: Boolean
+  });
+}
+
+function ensureVersionOption(config: any) {
+  const { options } = config;
+  for (const { name } of options) {
+    if (name === "version") return;
+  }
+
+  options.push({
+    name: "version",
+    description: "Prints version information.",
     type: Boolean
   });
 }
@@ -82,10 +88,17 @@ export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
     stderr: config.stderr || process.stderr,
 
     generateHelp,
+    generateVersion: booleanDefault(
+      config.generateVersion,
+      true,
+      "generateVersion"
+    ),
     catchErrors: booleanDefault(config.catchErrors, true, "catchErrors"),
 
     description: config.description || "",
     examples: config.examples || [],
+    version: config.version || "0.0.0",
+    details: config.details || "",
 
     options: (config.options || []).map(validateOption),
     subcommands: (config.subcommands || []).map(validateCommand)
@@ -94,6 +107,10 @@ export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
   if (generateHelp) {
     // TODO -- perhaps there's a better way to handle this
     ensureHelpOption(validConfig);
+  }
+
+  if (validConfig.generateVersion) {
+    ensureVersionOption(validConfig);
   }
 
   return validConfig;

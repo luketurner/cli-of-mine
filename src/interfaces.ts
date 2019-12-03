@@ -57,7 +57,9 @@ export interface ValidExecConfig {
 
   catchErrors: boolean;
   generateHelp: boolean;
+  generateVersion: boolean;
 
+  version: string;
   description: string;
   details: string;
   examples: Example[];

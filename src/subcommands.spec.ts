@@ -1,7 +1,7 @@
 import { exec } from '.';
 import { ExecConfig } from './interfaces';
 
-describe("cli-of-mine", () => {
+describe("subcommands", () => {
   let execConfig: ExecConfig;
   let handler: jest.Mock;
   let subhandler: jest.Mock;

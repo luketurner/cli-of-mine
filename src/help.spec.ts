@@ -1,7 +1,7 @@
 import { exec } from '.';
 import { ExecConfig } from './interfaces';
 
-describe("cli-of-mine", () => {
+describe("generateHelp", () => {
   let execConfig: ExecConfig;
 
   const testCLI = (argv: string[] = []) => exec({ ...execConfig, argv });

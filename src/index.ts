@@ -3,7 +3,15 @@ import { Console } from 'console';
 import { validateConfig } from './config';
 import { ExecutionError } from './error';
 import { getHelp } from './help';
-import { CommandDefinition, ExecConfig, ExecResult, HandlerCallback, HandlerContext, HandlerResult } from './interfaces';
+import {
+  CommandDefinition,
+  ExecConfig,
+  ExecResult,
+  HandlerCallback,
+  HandlerContext,
+  HandlerResult,
+  ValidExecConfig,
+} from './interfaces';
 import { ComposedMiddleware, composeMiddlewares, Middleware, MiddlewareCallback } from './middleware';
 import { parseArgv, ParsedCommand } from './parse';
 import { withStdIO } from './stdio';
@@ -84,9 +92,17 @@ export async function exec(userConfig: ExecConfig): Promise<ExecResult> {
         }
       }
 
+      if (config.generateVersion && cmds[0].args.version) {
+        return ctx.console.log(getVersion(config));
+      }
+
       const composedMiddlewares = composeParsedCommandHandlers(cmds, ctx);
 
       return await composedMiddlewares();
     });
   });
+}
+
+function getVersion(config: ValidExecConfig): string {
+  return `${config.name}: ${config.version}`;
 }
