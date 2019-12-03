@@ -1,6 +1,8 @@
 # cli-of-mine
 
-> _This CLI of mine, I'm gonna let it shine_
+[docs](https://luketurner.org/cli-of-mine) - [github](https://github.com/luketurner) - [npm](https://www.npmjs.com/package/cli-of-mine)
+
+> _"This CLI of mine, I'm gonna let it shine!"_
 
 This is a no-fuss CLI framework. It solves the CLI stuff, so you can focus on the other stuff.
 
