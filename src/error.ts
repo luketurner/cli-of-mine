@@ -7,7 +7,7 @@ export class CodedError extends Error {
   public code_prefix = "";
 
   public code: string;
-  public processExitCode?: string;
+  public processExitCode?: ExitCode;
 
   constructor(code: string | null, message: string) {
     super(message);
@@ -28,21 +28,31 @@ export class CodedError extends Error {
  */
 export class CLIError extends CodedError {
   code_prefix = "CLI_";
+
+  constructor(code: string | null, message: string) {
+    super(code, message);
+    Error.captureStackTrace(this, AppError);
+  }
 }
 
 /**
  * You can use AppError (or a subclass thereof) to throw coded errors from your handlers.
- * 
+ *
  */
 export class AppError extends CodedError {
   code_prefix = "APP_";
+
+  constructor(code: string | null, message: string) {
+    super(code, message);
+    Error.captureStackTrace(this, AppError);
+  }
 }
 
 export class ExecutionError extends Error {
   public ctx?: HandlerContext;
   public reason: CodedError;
   public code: string;
-  public processExitCode?: ExitCode;
+  public processExitCode: ExitCode;
 
   constructor(reason: any, ctx: HandlerContext | undefined) {
     super();
