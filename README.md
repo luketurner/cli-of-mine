@@ -193,9 +193,9 @@ async function handler(ctx, next) {
 }
 ```
 
-## Error Handling
+## Handlers Throwing Errors
 
-Handlers can "buy into" improved error handling by throwing instances of [AppError]. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
+Handlers can "buy into" improved error handling by throwing or rejecting with instances of [AppError]. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
 
 For example:
 
@@ -227,6 +227,11 @@ It's recommended that you extend [AppError] to implement your own error class, s
 ```js
 class FooError extends AppError {
   code_prefix = "FOO_";
+
+  constructor(code: string | null, message: string) {
+    super(code, message);
+    Error.captureStackTrace(this, FooError);
+  }
 }
 
 try {
@@ -236,7 +241,7 @@ try {
 }
 ```
 
-## Handling Errors
+## Error Handling Strategies
 
 [exec] provides three strategies for automated error handling, which you can pick using the `errorStrategy` property of the [ExecConfig].
 
