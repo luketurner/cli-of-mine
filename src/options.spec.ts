@@ -8,7 +8,7 @@ describe("option-related features", () => {
 
   beforeEach(() => {
     execConfig = {
-      catchErrors: false,
+      errorStrategy: "throw",
       name: "testapp",
       handler: () => {},
       options: [{ name: "foo" }]

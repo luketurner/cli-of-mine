@@ -8,7 +8,7 @@ describe("generateHelp", () => {
 
   beforeEach(() => {
     execConfig = {
-      catchErrors: false,
+      errorStrategy: "throw",
       stdout: "capture",
       name: "testapp",
       handler: () => {}

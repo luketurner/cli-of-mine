@@ -14,7 +14,7 @@ describe("subcommands", () => {
     subhandler = jest.fn((_ctx, next) => next());
     subsubhandler = jest.fn(() => {});
     execConfig = {
-      catchErrors: false,
+      errorStrategy: "throw",
       name: "testapp",
       handler: handler,
       options: [{ name: "foo" }],
@@ -36,6 +36,19 @@ describe("subcommands", () => {
   });
 
   it("should pass args to subcommands", async () => {
+    handler.mockImplementation((ctx, next) => {
+      expect(ctx.args).toMatchObject({ foo: "bar" });
+      return next();
+    });
+    subhandler.mockImplementation((ctx, next) => {
+      expect(ctx.args).toMatchObject({ bar: "foo" });
+      return next();
+    });
+    subsubhandler.mockImplementation((ctx, next) => {
+      expect(ctx.args).toMatchObject({ baz: "zab" });
+      return next();
+    });
+
     await testCLI([
       "--foo",
       "bar",
@@ -46,15 +59,6 @@ describe("subcommands", () => {
       "--baz",
       "zab"
     ]);
-    expect(handler.mock.calls[0][0]).toMatchObject({
-      args: { foo: "bar" }
-    });
-    expect(subhandler.mock.calls[0][0]).toMatchObject({
-      args: { bar: "foo" }
-    });
-    expect(subsubhandler.mock.calls[0][0]).toMatchObject({
-      args: { baz: "zab" }
-    });
   });
 
   it("should allow subcommands to share data using ctx.data", async () => {

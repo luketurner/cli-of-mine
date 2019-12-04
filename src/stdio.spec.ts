@@ -8,7 +8,7 @@ describe("stdio features", () => {
 
   beforeEach(() => {
     execConfig = {
-      catchErrors: false,
+      errorStrategy: "throw",
       name: "testapp",
       handler: () => {}
     };

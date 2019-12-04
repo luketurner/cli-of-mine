@@ -8,7 +8,7 @@ describe("generateVersion", () => {
 
   beforeEach(() => {
     execConfig = {
-      catchErrors: false,
+      errorStrategy: "throw",
       stdout: "capture",
       name: "testapp",
       version: "testversion",

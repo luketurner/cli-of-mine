@@ -8,7 +8,7 @@ describe("cli-of-mine", () => {
 
   beforeEach(() => {
     execConfig = {
-      catchErrors: false,
+      errorStrategy: "throw",
       name: "testapp",
       handler: () => {}
     };

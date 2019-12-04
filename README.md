@@ -14,6 +14,7 @@ What's it solve for you?
 - Encapsulating all I/O streams for 100% testability -- assuming you use its logging primitives.
 - Converting the metadata you provide into nice-looking help text with [command-line-usage].
 - Handling execution errors.
+- Determining an appropriate exit code for the process.
 
 See the [online docs] for API reference information.
 
@@ -27,7 +28,7 @@ npm i cli-of-mine
 
 > **Node Versions:** `cli-of-mine` is compiled to ES6/ES2015. It's tested with the latest versions of node v8, v10, and v12. Earlier versions may not work.
 
-This is the simplest possible CLI app:
+A simple usage example:
 
 ```js
 const { exec } = require("cli-of-mine");
@@ -38,12 +39,14 @@ exec({
   handler(ctx) {
     ctx.console.log("Hello, world!");
   }
+}).then(result => {
+  process.exitCode = result.processExitCode;
 });
 ```
 
 All configuration is done by passing options into the [exec] function. It returns a `Promise` that resolves when the execution is finished.
 
-For more information on the config `exec` supports, check out the [exec] and [ExecConfig] docs.
+For more information on the config [exec] supports, check the [ExecConfig] docs.
 
 ## Terminology Note
 
@@ -233,13 +236,31 @@ try {
 }
 ```
 
-## Catching Errors
+## Handling Errors
 
-By default, the [exec] function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.
+[exec] provides three strategies for automated error handling, which you can pick using the `errorStrategy` property of the [ExecConfig].
 
-If you wish to disable this behavior, set `catchErrors: false` in your [ExecConfig].
+The `"log"` strategy is the default.
 
-When `catchErrors` is false, the Promise returned by [exec] will possibly reject with an [ExecutionError], that you can inspect and handle in your application.
+**log strategy**
+
+When `errorStrategy: "log"`, the [exec] function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.
+
+The [ExecResult] will contain a `processExitCode` property that indicates what exit code is recommended to be used. [exec] _will not_ exit the process automatically.
+
+This is the default mode. It's useful if you want `cli-of-mine` to handle as much as possible, but you don't want it to exit the process for you.
+
+**throw strategy**
+
+when `errorStrategy: "throw"`, errors during execution will cause the returned `Promise` to be rejected with an [ExecutionError] that you can inspect and handle manually.
+
+This mode is useful for testing, or for cases where you want the code calling [exec] to be able to catch errors from within your handlers.
+
+**exit strategy**
+
+When `errorStrategy: "exit"`, errors during execution will be logged to the user. If the execution would result in a nonzero exit code, the process will be automatically exited with that code.
+
+This mode is useful if you want `cli-of-mine` to completely manage error handling, and you don't need to run any code after [exec] is finished.
 
 # FAQ
 

@@ -93,7 +93,8 @@ export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
       true,
       "generateVersion"
     ),
-    catchErrors: booleanDefault(config.catchErrors, true, "catchErrors"),
+
+    errorStrategy: config.errorStrategy || "log",
 
     description: config.description || "",
     examples: config.examples || [],

@@ -55,7 +55,7 @@ export interface ValidExecConfig {
   stdout: OutputStream | "capture";
   stderr: OutputStream | "capture";
 
-  catchErrors: boolean;
+  errorStrategy: "throw" | "log" | "exit";
   generateHelp: boolean;
   generateVersion: boolean;
 
@@ -111,6 +111,8 @@ export interface HandlerContext {
   stdin: InputStream;
   stdout: OutputStream;
   stderr: OutputStream;
+
+  processExitCode: number;
 }
 
 export interface UserData {
@@ -125,4 +127,5 @@ export interface ExecResult {
   result: HandlerResult;
   stdout?: string;
   stderr?: string;
+  processExitCode?: number;
 }

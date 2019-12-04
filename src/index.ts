@@ -18,7 +18,7 @@ import { withStdIO } from './stdio';
 
 export { AppError } from "./error";
 
-async function catchErrorHandler(
+async function logErrorHandler(
   ctx: HandlerContext,
   next: HandlerCallback
 ): Promise<HandlerResult> {
@@ -26,6 +26,8 @@ async function catchErrorHandler(
     return await next();
   } catch (e) {
     ctx.console.error(e.message || e);
+    ctx.processExitCode = e.processExitCode || 1;
+    return;
   }
 }
 
@@ -36,7 +38,23 @@ async function throwErrorHandler(
   try {
     return await next();
   } catch (e) {
-    throw new ExecutionError(e, ctx);
+    const execError = new ExecutionError(e, ctx);
+    ctx.processExitCode = execError.processExitCode;
+    throw execError;
+  }
+}
+
+async function exitErrorHandler(
+  ctx: HandlerContext,
+  next: HandlerCallback
+): Promise<HandlerResult> {
+  try {
+    await next();
+    if (ctx.processExitCode) process.exit(ctx.processExitCode);
+  } catch (e) {
+    ctx.console.error(e.message || e);
+    process.exit(e.processExitCode || 1);
+    return;
   }
 }
 
@@ -50,16 +68,18 @@ function getCommandHandler(command: CommandDefinition) {
 
 function composeParsedCommandHandlers(
   cmds: ParsedCommand[],
-  baseContext: HandlerContext
+  ctx: HandlerContext
 ): ComposedMiddleware {
   const handlerMiddlewares: Middleware[] = cmds.map(({ command, args }, ix) => {
     const handler = getCommandHandler(command);
-    const ctx: HandlerContext = { ...baseContext, args };
     if (ix + 1 < cmds.length) {
       ctx.subcommand = cmds[ix + 1].command;
     }
 
-    return async next => handler(ctx, next);
+    return async next => {
+      ctx.args = args;
+      return handler(ctx, next);
+    };
   });
 
   return composeMiddlewares(handlerMiddlewares);
@@ -68,41 +88,59 @@ function composeParsedCommandHandlers(
 export async function exec(userConfig: ExecConfig): Promise<ExecResult> {
   const config = validateConfig(userConfig);
 
-  const errorHandler = config.catchErrors
-    ? catchErrorHandler
-    : throwErrorHandler;
+  const errorHandler = {
+    throw: throwErrorHandler,
+    log: logErrorHandler,
+    exit: exitErrorHandler
+  }[config.errorStrategy];
 
-  return await withStdIO(config, async ({ stdin, stdout, stderr }) => {
-    const ctx: HandlerContext = {
-      stdin,
-      stdout,
-      stderr,
-      console: new Console(stdout, stderr),
-      data: {},
-      args: {},
-      argv: config.argv
-    };
+  const ctx: Partial<HandlerContext> = {
+    data: {},
+    args: {},
+    argv: config.argv,
+    processExitCode: 0
+  };
+  // TODO -- better way to handle this withStdIO abstraction
+  const execResult: ExecResult = await withStdIO(
+    config,
+    async ({ stdin, stdout, stderr }) => {
+      ctx.stdin = stdin;
+      ctx.stdout = stdout;
+      ctx.stderr = stderr;
+      ctx.console = new Console(stdout, stderr);
 
-    return await errorHandler(ctx, async () => {
-      const cmds = parseArgv(config);
+      // TODO -- handle this better too
+      const validContext = ctx as HandlerContext;
 
-      if (config.generateHelp) {
-        for (const { command, args } of cmds) {
-          if (args.help) {
-            return ctx.console.log(getHelp(command));
+      return await errorHandler(validContext, async () => {
+        const cmds = parseArgv(config);
+
+        if (config.generateHelp) {
+          for (const { command, args } of cmds) {
+            if (args.help) {
+              return validContext.console.log(getHelp(command));
+            }
           }
         }
-      }
 
-      if (config.generateVersion && cmds[0].args.version) {
-        return ctx.console.log(getVersion(config));
-      }
+        if (config.generateVersion && cmds[0].args.version) {
+          return validContext.console.log(getVersion(config));
+        }
 
-      const composedMiddlewares = composeParsedCommandHandlers(cmds, ctx);
+        const composedMiddlewares = composeParsedCommandHandlers(
+          cmds,
+          validContext
+        );
 
-      return await composedMiddlewares();
-    });
-  });
+        const result = await composedMiddlewares();
+
+        return result;
+      });
+    }
+  );
+
+  execResult.processExitCode = ctx.processExitCode || 0;
+  return execResult;
 }
 
 function getVersion(config: ValidExecConfig): string {
