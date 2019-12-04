@@ -76,13 +76,18 @@
 					<li>Encapsulating all I/O streams for 100% testability -- assuming you use its logging primitives.</li>
 					<li>Converting the metadata you provide into nice-looking help text with <a href="https://github.com/75lb/command-line-usage">command-line-usage</a>.</li>
 					<li>Handling execution errors.</li>
+					<li>Determining an appropriate exit code for the process.</li>
 				</ul>
 				<p>See the <a href="https://luketurner.org/cli-of-mine">online docs</a> for API reference information.</p>
 				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
 					<h1>Getting Started</h1>
 				</a>
-				<p>Install <code>cli-of-mine</code> from Github:</p>
-				<pre><code>npm i luketurner/<span class="hljs-keyword">cli</span>-of-mine</code></pre><p>This is the simplest possible CLI app:</p>
+				<p>Install <code>cli-of-mine</code> from npm:</p>
+				<pre><code class="language-bash">npm i cli-of-mine</code></pre>
+				<blockquote>
+					<p><strong>Node Versions:</strong> <code>cli-of-mine</code> is compiled to ES6/ES2015. It&#39;s tested with the latest versions of node v8, v10, and v12. Earlier versions may not work.</p>
+				</blockquote>
+				<p>A simple usage example:</p>
 				<pre><code class="language-js"><span class="hljs-keyword">const</span> { exec } = <span class="hljs-built_in">require</span>(<span class="hljs-string">"cli-of-mine"</span>);
 
 exec({
@@ -91,9 +96,11 @@ exec({
   handler(ctx) {
     ctx.console.log(<span class="hljs-string">"Hello, world!"</span>);
   }
+}).then(<span class="hljs-function"><span class="hljs-params">result</span> =&gt;</span> {
+  process.exitCode = result.processExitCode;
 });</code></pre>
 				<p>All configuration is done by passing options into the <a href="globals.html#exec">exec</a> function. It returns a <code>Promise</code> that resolves when the execution is finished.</p>
-				<p>For more information on the config <code>exec</code> supports, check out the <a href="globals.html#exec">exec</a> and <a href="interfaces/execconfig.html">ExecConfig</a> docs.</p>
+				<p>For more information on the config <a href="globals.html#exec">exec</a> supports, check the <a href="interfaces/execconfig.html">ExecConfig</a> docs.</p>
 				<a href="#terminology-note" id="terminology-note" style="color: inherit; text-decoration: none;">
 					<h2>Terminology Note</h2>
 				</a>
@@ -163,7 +170,10 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
   });
 }</code></pre>
 				<p>Your final handler (the &quot;controller&quot; in Express parlance) can call <code>next</code> if it wants, but it doesn&#39;t have to. If it does, the <code>next</code> is a no-op.</p>
-				<p>Note that just because subcommands are defined, <code>cli-of-mine</code> will not throw errors if no subcommand is specified. Handlers can &quot;enable&quot; this behavior for themselves using the <code>subcommand</code> property of <a href="interfaces/handlercontext.html">HandlerContext</a>, which indicates which subcommand (if any) the user has requested:</p>
+				<a href="#required-subcommands" id="required-subcommands" style="color: inherit; text-decoration: none;">
+					<h3>Required Subcommands</h3>
+				</a>
+				<p>Handlers have access to the <code>subcommand</code> property of <a href="interfaces/handlercontext.html">HandlerContext</a>, which indicates which subcommand (if any) the user has requested. This can be used, for instance, to throw an error if no subcommands are specified:</p>
 				<pre><code class="language-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">handler</span>(<span class="hljs-params">ctx, next</span>) </span>{
   <span class="hljs-keyword">if</span> (!ctx.subcommand) {
     <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> AppError(<span class="hljs-string">"BAD_COMMAND"</span>, <span class="hljs-string">"Must specify command"</span>);
@@ -205,10 +215,10 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
   <span class="hljs-comment">// make sure to return the subcommand's result if you care about it.</span>
   <span class="hljs-keyword">return</span> result;
 }</code></pre>
-				<a href="#error-handling" id="error-handling" style="color: inherit; text-decoration: none;">
-					<h2>Error Handling</h2>
+				<a href="#handlers-throwing-errors" id="handlers-throwing-errors" style="color: inherit; text-decoration: none;">
+					<h2>Handlers Throwing Errors</h2>
 				</a>
-				<p>Handlers can &quot;buy into&quot; improved error handling by throwing instances of <a href="classes/apperror.html">AppError</a>. It extends <code>Error</code> with support for error codes, and it automatically &quot;namespaces&quot; your codes by prefixing them with <code>APP_</code>, so they won&#39;t conflict with <code>cli-of-mine</code> codes (or Node codes).</p>
+				<p>Handlers can &quot;buy into&quot; improved error handling by throwing or rejecting with instances of <a href="classes/apperror.html">AppError</a>. It extends <code>Error</code> with support for error codes, and it automatically &quot;namespaces&quot; your codes by prefixing them with <code>APP_</code>, so they won&#39;t conflict with <code>cli-of-mine</code> codes (or Node codes).</p>
 				<p>For example:</p>
 				<pre><code class="language-js"><span class="hljs-keyword">const</span> { AppError } = <span class="hljs-built_in">require</span>(<span class="hljs-string">"cli-of-mine"</span>);
 
@@ -229,6 +239,11 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
 				<p>It&#39;s recommended that you extend <a href="classes/apperror.html">AppError</a> to implement your own error class, so you can document error codes more cleanly in your app. For example:</p>
 				<pre><code class="language-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FooError</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">AppError</span> </span>{
   code_prefix = <span class="hljs-string">"FOO_"</span>;
+
+  <span class="hljs-keyword">constructor</span>(code: string | null, message: string) {
+    <span class="hljs-keyword">super</span>(code, message);
+    <span class="hljs-built_in">Error</span>.captureStackTrace(<span class="hljs-keyword">this</span>, FooError);
+  }
 }
 
 <span class="hljs-keyword">try</span> {
@@ -236,12 +251,21 @@ myapp widgets list --<span class="hljs-built_in">help</span></code></pre>
 } <span class="hljs-keyword">catch</span> (e) {
   <span class="hljs-built_in">console</span>.log(e.code); <span class="hljs-comment">// logs FOO_MY_CODE</span>
 }</code></pre>
-				<a href="#catching-errors" id="catching-errors" style="color: inherit; text-decoration: none;">
-					<h2>Catching Errors</h2>
+				<a href="#error-handling-strategies" id="error-handling-strategies" style="color: inherit; text-decoration: none;">
+					<h2>Error Handling Strategies</h2>
 				</a>
-				<p>By default, the <a href="globals.html#exec">exec</a> function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.</p>
-				<p>If you wish to disable this behavior, set <code>catchErrors: false</code> in your <a href="interfaces/execconfig.html">ExecConfig</a>.</p>
-				<p>When <code>catchErrors</code> is false, the Promise returned by <a href="globals.html#exec">exec</a> will possibly reject with an <a href="classes/executionerror.html">ExecutionError</a>, that you can inspect and handle in your application.</p>
+				<p><a href="globals.html#exec">exec</a> provides three strategies for automated error handling, which you can pick using the <code>errorStrategy</code> property of the <a href="interfaces/execconfig.html">ExecConfig</a>.</p>
+				<p>The <code>&quot;log&quot;</code> strategy is the default.</p>
+				<p><strong>log strategy</strong></p>
+				<p>When <code>errorStrategy: &quot;log&quot;</code>, the <a href="globals.html#exec">exec</a> function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.</p>
+				<p>The <a href="interfaces/execresult.html">ExecResult</a> will contain a <code>processExitCode</code> property that indicates what exit code is recommended to be used. <a href="globals.html#exec">exec</a> <em>will not</em> exit the process automatically.</p>
+				<p>This is the default mode. It&#39;s useful if you want <code>cli-of-mine</code> to handle as much as possible, but you don&#39;t want it to exit the process for you.</p>
+				<p><strong>throw strategy</strong></p>
+				<p>when <code>errorStrategy: &quot;throw&quot;</code>, errors during execution will cause the returned <code>Promise</code> to be rejected with an <a href="classes/executionerror.html">ExecutionError</a> that you can inspect and handle manually.</p>
+				<p>This mode is useful for testing, or for cases where you want the code calling <a href="globals.html#exec">exec</a> to be able to catch errors from within your handlers.</p>
+				<p><strong>exit strategy</strong></p>
+				<p>When <code>errorStrategy: &quot;exit&quot;</code>, errors during execution will be logged to the user. If the execution would result in a nonzero exit code, the process will be automatically exited with that code.</p>
+				<p>This mode is useful if you want <code>cli-of-mine</code> to completely manage error handling, and you don&#39;t need to run any code after <a href="globals.html#exec">exec</a> is finished.</p>
 				<a href="#faq" id="faq" style="color: inherit; text-decoration: none;">
 					<h1>FAQ</h1>
 				</a>
