@@ -20,71 +20,43 @@ export interface HandlerCallback {
   (): Promise<HandlerResult>;
 }
 
-export interface ExecConfig
-  extends Omit<Omit<Partial<ValidExecConfig>, "options">, "subcommands"> {
-  // required fields
+export interface ExecConfig {
   name: string;
+  argv?: Argv;
+
+  stdin?: InputStream | string;
+  stdout?: OutputStream | "capture";
+  stderr?: OutputStream | "capture";
+
+  errorStrategy?: "throw" | "log" | "exit";
+  generateHelp?: boolean;
+  generateVersion?: boolean;
+
+  version?: string;
+  description?: string;
+  details?: string;
+  examples?: Example[];
+
+  handler?: Handler;
 
   options?: OptionDefinition[];
   subcommands?: CommandDefinition[];
 }
 
-export interface CommandDefinition
-  extends Omit<
-    Omit<Partial<ValidCommandDefinition>, "options">,
-    "subcommands"
-  > {
-  // required fields
+export interface CommandDefinition {
   name: string;
+
+  handler?: Handler;
+
+  description?: string;
+  details?: string;
+  examples?: Example[];
 
   options?: OptionDefinition[];
   subcommands?: CommandDefinition[];
 }
 
-export interface OptionDefinition extends Partial<ValidOptionDefinition> {
-  // required fields
-  name: string;
-}
-
-/** @hidden */
-export interface ValidExecConfig {
-  name: string;
-  argv: Argv;
-
-  stdin: InputStream | string;
-  stdout: OutputStream | "capture";
-  stderr: OutputStream | "capture";
-
-  errorStrategy: "throw" | "log" | "exit";
-  generateHelp: boolean;
-  generateVersion: boolean;
-
-  version: string;
-  description: string;
-  details: string;
-  examples: Example[];
-
-  handler: Handler;
-  options: ValidOptionDefinition[];
-  subcommands: ValidCommandDefinition[];
-}
-
-/** @hidden */
-export interface ValidCommandDefinition {
-  name: string;
-  // alias: string[];
-  handler: Handler;
-
-  description: string;
-  details: string;
-  examples: Example[];
-
-  options: ValidOptionDefinition[];
-  subcommands: ValidCommandDefinition[];
-}
-
-/** @hidden */
-export interface ValidOptionDefinition {
+export interface OptionDefinition {
   name: string;
   alias?: string;
   description?: string;
@@ -94,6 +66,27 @@ export interface ValidOptionDefinition {
   defaultOption?: boolean;
   defaultValue?: any;
   group?: string;
+}
+
+/**
+ * @hidden
+ */
+export interface ValidExecConfig extends Required<ExecConfig> {
+  options: ValidOptionDefinition[];
+  subcommands: ValidCommandDefinition[];
+}
+
+/**
+ * @hidden
+ */
+export interface ValidOptionDefinition extends OptionDefinition {}
+
+/**
+ * @hidden
+ */
+export interface ValidCommandDefinition extends Required<CommandDefinition> {
+  options: ValidOptionDefinition[];
+  subcommands: ValidCommandDefinition[];
 }
 
 /**
