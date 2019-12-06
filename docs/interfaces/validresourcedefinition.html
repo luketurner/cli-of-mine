@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ParsedCommand | cli-of-mine</title>
+	<title>ValidResourceDefinition | cli-of-mine</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -52,10 +52,10 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="parsedcommand.html">ParsedCommand</a>
+					<a href="validresourcedefinition.html">ValidResourceDefinition</a>
 				</li>
 			</ul>
-			<h1>Interface ParsedCommand</h1>
+			<h1>Interface ValidResourceDefinition</h1>
 		</div>
 	</div>
 </header>
@@ -66,7 +66,12 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ParsedCommand</span>
+						<span class="tsd-signature-type">object</span>
+						<ul class="tsd-hierarchy">
+							<li>
+								<span class="target">ValidResourceDefinition</span>
+							</li>
+						</ul>
 					</li>
 				</ul>
 			</section>
@@ -77,8 +82,7 @@
 						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="parsedcommand.html#args" class="tsd-kind-icon">args</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="parsedcommand.html#command" class="tsd-kind-icon">command</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="validresourcedefinition.html#commands" class="tsd-kind-icon">commands</a></li>
 							</ul>
 						</section>
 					</div>
@@ -87,22 +91,12 @@
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="args" class="tsd-anchor"></a>
-					<h3>args</h3>
-					<div class="tsd-signature tsd-kind-icon">args<span class="tsd-signature-symbol">:</span> <a href="cliarguments.html" class="tsd-signature-type">CLIArguments</a></div>
+					<a name="commands" class="tsd-anchor"></a>
+					<h3>commands</h3>
+					<div class="tsd-signature tsd-kind-icon">commands<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ValidCommandDefinition</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/f5f09ad/src/parse.ts#L7">src/parse.ts:7</a></li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="command" class="tsd-anchor"></a>
-					<h3>command</h3>
-					<div class="tsd-signature tsd-kind-icon">command<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">ValidCommandDefinition</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/f5f09ad/src/parse.ts#L6">src/parse.ts:6</a></li>
+							<li>Defined in <a href="https://github.com/luketurner/cli-of-mine/blob/71b120d/src/interfaces.ts#L105">src/interfaces.ts:105</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -131,6 +125,9 @@
 						<a href="commanddefinition.html" class="tsd-kind-icon">Command<wbr>Definition</a>
 					</li>
 					<li class=" tsd-kind-interface">
+						<a href="commandexecution.html" class="tsd-kind-icon">Command<wbr>Execution</a>
+					</li>
+					<li class=" tsd-kind-interface">
 						<a href="execconfig.html" class="tsd-kind-icon">Exec<wbr>Config</a>
 					</li>
 					<li class=" tsd-kind-interface">
@@ -148,24 +145,24 @@
 					<li class=" tsd-kind-interface">
 						<a href="optiondefinition.html" class="tsd-kind-icon">Option<wbr>Definition</a>
 					</li>
+					<li class=" tsd-kind-interface">
+						<a href="resourcedefinition.html" class="tsd-kind-icon">Resource<wbr>Definition</a>
+					</li>
+					<li class=" tsd-kind-interface">
+						<a href="userdata.html" class="tsd-kind-icon">User<wbr>Data</a>
+					</li>
 				</ul>
 				<ul class="current">
 					<li class="current tsd-kind-interface">
-						<a href="parsedcommand.html" class="tsd-kind-icon">Parsed<wbr>Command</a>
+						<a href="validresourcedefinition.html" class="tsd-kind-icon">Valid<wbr>Resource<wbr>Definition</a>
 						<ul>
 							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="parsedcommand.html#args" class="tsd-kind-icon">args</a>
-							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="parsedcommand.html#command" class="tsd-kind-icon">command</a>
+								<a href="validresourcedefinition.html#commands" class="tsd-kind-icon">commands</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface">
-						<a href="userdata.html" class="tsd-kind-icon">User<wbr>Data</a>
-					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="../globals.html#argv" class="tsd-kind-icon">Argv</a>
 					</li>
