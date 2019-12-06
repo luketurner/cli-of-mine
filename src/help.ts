@@ -1,14 +1,16 @@
 import * as commandLineUsage from 'command-line-usage';
 
-import { CommandDefinition } from './interfaces';
+import { ValidCommandDefinition, ValidExecConfig, ValidResourceDefinition } from './interfaces';
 
 /**
  * @hidden
  */
-export function getHelp(config: CommandDefinition) {
+export function getHelp(config: ValidExecConfig) {
   const helpSections = [];
 
-  helpSections.push(descriptionSection(config.name, config.description));
+  helpSections.push(
+    descriptionSection(config.name, config.description, config.details)
+  );
 
   if (config.examples) helpSections.push(exampleSection(config.examples));
 
@@ -17,11 +19,31 @@ export function getHelp(config: CommandDefinition) {
   if (config.subcommands)
     helpSections.push(subcommandSection(config.subcommands));
 
+  if (config.resources) helpSections.push(resourceSection(config.resources));
+
   return commandLineUsage(helpSections);
 }
 
-function descriptionSection(header: any, content: any) {
-  return { header, content };
+/** @hidden */
+export function getCommandHelp(command: ValidCommandDefinition) {
+  const helpSections = [];
+
+  helpSections.push(
+    descriptionSection(command.name, command.description, command.details)
+  );
+
+  if (command.examples) helpSections.push(exampleSection(command.examples));
+
+  if (command.options) helpSections.push(optionSection(command.options));
+
+  if (command.subcommands)
+    helpSections.push(subcommandSection(command.subcommands));
+
+  return commandLineUsage(helpSections);
+}
+
+function descriptionSection(header: any, content: any, details: any) {
+  return { header, content: details ? [content, details] : content };
 }
 
 function exampleSection(examples: any) {
@@ -48,4 +70,14 @@ function optionSection(optionList: any) {
     header: "Options",
     optionList
   };
+}
+
+function resourceSection(resourceList: ValidResourceDefinition[]) {
+  const content = resourceList.map(resource => ({
+    Name: resource.name,
+    Description: resource.description,
+    Verbs: resource.commands.map(c => c.name).join(", ")
+  }));
+
+  return { header: "Resources", content };
 }

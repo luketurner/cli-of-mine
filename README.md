@@ -267,6 +267,80 @@ When `errorStrategy: "exit"`, errors during execution will be logged to the user
 
 This mode is useful if you want `cli-of-mine` to completely manage error handling, and you don't need to run any code after [exec] is finished.
 
+# Resources
+
+`cli-of-mine` includes support for declaring _resources_ and _verbs_ using the `resources` property of [ExecConfig]. In other words, it provides support for the `myapp [verb] [noun]` invocation pattern. (As used by `kubectl`, for instance.)
+
+As a trivial example, say we want to make a CLI that lets you run:
+
+```bash
+myapp add widget
+myapp get widget
+myapp rm widget
+```
+
+We can do this by defining a `widget` resource:
+
+```js
+exec({
+  name: "myapp",
+
+  resources: [
+    {
+      name: "widget",
+      commands: [
+        {
+          name: "add",
+          handler: ctx => ctx.console.log("add widget")
+        },
+        {
+          name: "get",
+          handler: ctx => ctx.console.log("get widget")
+        }
+        {
+          name: "rm",
+          handler: ctx => ctx.console.log("rm widget")
+        }
+      ]
+    }
+  ],
+});
+```
+
+Resources and subcommands can be used together. If a resource and subcommand overlaps, the subcommand is chosen and executed instead. This can be used to define "default" behavior for a given verb, for example:
+
+```js
+exec({
+  name: "myapp",
+
+  resources: [
+    {
+      name: "widget",
+      commands: [
+        {
+          name: "run",
+          handler: ctx => ctx.console.log("Running widget")
+        }
+      ]
+    }
+  ],
+
+  subcommands: [
+    {
+      name: "run",
+      handler: ctx => ctx.console.log("Default run behavior")
+    }
+  ]
+});
+```
+
+In this case, both these invocations are valid:
+
+```bash
+myapp run widget    # prints "Running widget"
+myapp run           # prints "Default run behavior"
+```
+
 # FAQ
 
 **Q: Is there an @types/cli-of-mine package?**

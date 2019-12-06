@@ -4,9 +4,11 @@ import {
   ExecConfig,
   Handler,
   OptionDefinition,
+  ResourceDefinition,
   ValidCommandDefinition,
   ValidExecConfig,
   ValidOptionDefinition,
+  ValidResourceDefinition,
 } from './interfaces';
 
 function ensureHelpOption(config: any) {
@@ -75,6 +77,20 @@ export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
     return validCommand;
   };
 
+  const validateResource = (
+    resource: ResourceDefinition
+  ): ValidResourceDefinition => {
+    const validResource: ValidResourceDefinition = {
+      name: resource.name,
+      aliases: resource.aliases || [],
+      description: resource.description || "",
+
+      commands: (resource.commands || []).map(validateCommand)
+    };
+
+    return validResource;
+  };
+
   if (!config) throw new Error("Must pass an object to exec()");
   if (!config.name) throw new Error("Must specify ExecConfig.name");
 
@@ -102,7 +118,8 @@ export function validateConfig(config: Partial<ExecConfig>): ValidExecConfig {
     details: config.details || "",
 
     options: (config.options || []).map(validateOption),
-    subcommands: (config.subcommands || []).map(validateCommand)
+    subcommands: (config.subcommands || []).map(validateCommand),
+    resources: (config.resources || []).map(validateResource)
   };
 
   if (generateHelp) {

@@ -2,7 +2,7 @@ import { Console } from 'console';
 
 import { validateConfig } from './config';
 import { ExecutionError } from './error';
-import { getHelp } from './help';
+import { getCommandHelp, getHelp } from './help';
 import {
   CommandDefinition,
   ExecConfig,
@@ -13,7 +13,7 @@ import {
   ValidExecConfig,
 } from './interfaces';
 import { ComposedMiddleware, composeMiddlewares, Middleware, MiddlewareCallback } from './middleware';
-import { parseArgv, ParsedCommand } from './parse';
+import { CommandExecution, parseArgv } from './parse';
 import { withStdIO } from './stdio';
 
 export { AppError } from "./error";
@@ -67,7 +67,7 @@ function getCommandHandler(command: CommandDefinition) {
 }
 
 function composeParsedCommandHandlers(
-  cmds: ParsedCommand[],
+  cmds: CommandExecution[],
   ctx: HandlerContext
 ): ComposedMiddleware {
   const handlerMiddlewares: Middleware[] = cmds.map(({ command, args }, ix) => {
@@ -115,10 +115,14 @@ export async function exec(userConfig: ExecConfig): Promise<ExecResult> {
       return await errorHandler(validContext, async () => {
         const cmds = parseArgv(config);
 
+        const [baseCmd, ...subCmds] = cmds;
+
         if (config.generateHelp) {
-          for (const { command, args } of cmds) {
+          if (baseCmd.args.help)
+            return validContext.console.log(getHelp(config));
+          for (const { command, args } of subCmds) {
             if (args.help) {
-              return validContext.console.log(getHelp(command));
+              return validContext.console.log(getCommandHelp(command));
             }
           }
         }

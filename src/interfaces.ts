@@ -41,6 +41,8 @@ export interface ExecConfig {
 
   options?: OptionDefinition[];
   subcommands?: CommandDefinition[];
+
+  resources?: ResourceDefinition[];
 }
 
 export interface CommandDefinition {
@@ -68,12 +70,22 @@ export interface OptionDefinition {
   group?: string;
 }
 
+export interface ResourceDefinition {
+  name: string;
+
+  aliases?: string[];
+  description?: string;
+
+  commands?: CommandDefinition[];
+}
+
 /**
  * @hidden
  */
 export interface ValidExecConfig extends Required<ExecConfig> {
   options: ValidOptionDefinition[];
   subcommands: ValidCommandDefinition[];
+  resources: ValidResourceDefinition[];
 }
 
 /**
@@ -87,6 +99,10 @@ export interface ValidOptionDefinition extends OptionDefinition {}
 export interface ValidCommandDefinition extends Required<CommandDefinition> {
   options: ValidOptionDefinition[];
   subcommands: ValidCommandDefinition[];
+}
+
+export interface ValidResourceDefinition extends Required<ResourceDefinition> {
+  commands: ValidCommandDefinition[];
 }
 
 /**
