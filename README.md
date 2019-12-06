@@ -15,20 +15,39 @@ What's it solve for you?
 - Converting the metadata you provide into nice-looking help text with [command-line-usage].
 - Handling execution errors.
 - Determining an appropriate exit code for the process.
+- Resource-style commands (e.g. `myapp [verb] [noun]`)
 
 See the [online docs] for API reference information.
+
+1. [Getting Started](#getting-started)
+   1. [Terminology](#terminology)
+1. [Handlers](#handlers)
+   1. [Handler Results](#handler-results)
+   1. [Handler Errors](#handler-errors)
+1. [Subcommands](#subcommands)
+   1. [Subcommand Options](#subcommand-options)
+   1. [Subcommands Sharing Data](#subcommands-sharing-data)
+   1. [Required Subcommands](#required-subcommands)
+1. [Resources](#resources)
+1. [Help Text](#help-text)
+1. [Version Text](#version-text)
+1. [Error Strategies](#error-strategies)
+1. [Testing](#testing)
+1. [FAQ](#faq)
 
 # Getting Started
 
 Install `cli-of-mine` from npm:
 
+> **Node Versions:** `cli-of-mine` is tested with the latest versions of node v8, v10, and v12. Earlier versions are not supported.
+
 ```bash
 npm i cli-of-mine
 ```
 
-> **Node Versions:** `cli-of-mine` is compiled to ES6/ES2015. It's tested with the latest versions of node v8, v10, and v12. Earlier versions may not work.
+The `cli-of-mine` module exports a single function, [exec]. It expects an [ExecConfig] object that describes how the CLI should work.
 
-A simple usage example:
+A "hello world" example just needs to define a `name` and a `handler`:
 
 ```js
 const { exec } = require("cli-of-mine");
@@ -39,16 +58,12 @@ exec({
   handler(ctx) {
     ctx.console.log("Hello, world!");
   }
-}).then(result => {
-  process.exitCode = result.processExitCode;
-});
+}).then(result => process.exit(result.processExitCode));
 ```
 
-All configuration is done by passing options into the [exec] function. It returns a `Promise` that resolves when the execution is finished.
+For more information on the config `cli-of-mine` supports, check the [ExecConfig] API reference.
 
-For more information on the config [exec] supports, check the [ExecConfig] docs.
-
-## Terminology Note
+## Terminology
 
 The following terms have a specific meaning when used in this documentation.
 
@@ -57,52 +72,24 @@ The following terms have a specific meaning when used in this documentation.
 - _command_ - An argument that matches the name of a command definition.
 - _option_ - An argument that starts with a `-` and might have one or more values, e.g. `--force` or `--file foo.txt`.
 
-# Help Text
-
-`cli-of-mine` will intercept `--help` flags and handle them automatically. When this happens, _none_ of your handlers will be called and the `result` of the execution will be `undefined`.
-
-Different text is shown based on which command receives the `--help` flag. For example:
-
-```bash
-# displays root help for myapp
-myapp --help
-
-# displays help for "widgets" command
-myapp widgets --help
-
-# displays help for "list" subcommand
-myapp widgets list --help
-```
-
-You can disable this functionality by setting `generateHelp: false` in your [ExecConfig].
-
-# Version Text
-
-`cli-of-mine` will intercept `--version` options (_unless_ they are passed to a subcommand) and print version information based on the `version` property of the [ExecConfig]. This behavior can be disabled by setting `generateVersion: false`.
-
 # Handlers
 
-`cli-of-mine` requires you to specify **handlers**, which provide the implementation of your CLI commands. The framework will call the appropriate handlers for the commands the user asked for.
+When [exec] is called, it calls one or more [Handlers](Handler) based on the commands/subcommands that the user is invoking. The handlers implement the "business logic" or "application logic" for the commands.
 
-Handlers are functions that get called with two arguments: a `context` object (see [HandlerContext]) and a `next` function (see [HandlerCallback]). See the [Handler] interface for more details about supported types.
-
-You can ignore the `next` function unless you want to support subcommands. See [Subcommands].
-
-Handlers are mostly used to:
-
-1. Execute your application logic for each command.
-2. Provide shared context for subcommand handlers.
-
-The first use-case, executing business logic, is carried out by the final command in the chain. (The "controller", so to speak.)
-
-This is a very simple example that just logs the CLI arguments it received:
+For example, this handler prints `"Hello, World!"` using the `cli-of-mine` logging primitives.
 
 ```js
-function handler(ctx, next) {
-  const { args, console } = ctx;
-  console.log("Got args:", args);
-}
+const { exec } = require("cli-of-mine");
+
+exec({
+  name: "my-app",
+  handler(ctx) {
+    ctx.console.log("Hello, world!");
+  }
+});
 ```
+
+[Handlers](Handler) are functions that get called with two arguments: a `context` object (see [HandlerContext]) and a `next` function (see [HandlerCallback]).
 
 ## Handler Results
 
@@ -120,82 +107,11 @@ function handler(ctx, next) {
 }
 ```
 
-## Subcommands
+## Handler Errors
 
-`cli-of-mine` is designed to support arbitrarily nested levels of subcommands using a **middleware pattern** inspired by frameworks like Express. This allows you to handle options at every subcommand level.
+Any errors thrown within a handler will be caught and dealt with automatically.
 
-The special thing about middlewares is that your handler **must choose when to relinquish control to the next handler** by calling `next()` (which returns a Promise). For example:
-
-```js
-function handler(ctx, next) {
-  // things to do before subcommand starts
-
-  // next() runs the subcommand's handler
-  return next().then(result => {
-    // things to do after subcommand is finished
-  });
-}
-```
-
-Your final handler (the "controller" in Express parlance) can call `next` if it wants, but it doesn't have to. If it does, the `next` is a no-op.
-
-### Required Subcommands
-
-Handlers have access to the `subcommand` property of [HandlerContext], which indicates which subcommand (if any) the user has requested. This can be used, for instance, to throw an error if no subcommands are specified:
-
-```js
-function handler(ctx, next) {
-  if (!ctx.subcommand) {
-    throw new AppError("BAD_COMMAND", "Must specify command");
-  }
-  return next();
-}
-```
-
-### Subcommand Options
-
-Each "level" of command/subcommand specifies its own set of options. The handler is only provided the options relevant to that specific subcommand, not the ones before or after it.
-
-For example, assume `widgets` is a subcommand of your application and `list` is a subcommand of `widgets` -- so users can run `myapp widgets list`.
-
-If someone runs: `myapp -v widgets list --filter green`, then the options will be doled out like so:
-
-1. The root handler is given the `-v` argument.
-2. The `widgets` handler is given no arguments.
-3. The `list` handler is given the `--filter green` argument.
-
-If the `list` handler actually cares about the `-v` argument, the root handler has to give it that information explicitly using `ctx.data` (see below).
-
-### Subcommands Sharing Data
-
-You cannot provide arguments to `next()`.
-
-If you want to share data between subcommands, you should assign it to the `ctx.data` object, which is reserved for arbitrary handler data.
-
-For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished.
-
-> Note: The `async`/`await` syntax is used in this and remaining examples to improve readability. But good ol' Promise chains work just fine.
-
-```js
-async function handler(ctx, next) {
-  const { args, data } = ctx;
-
-  // initialize dbConn before running subcommand
-  data.dbConn = await getFooDatabaseConn(args.db);
-
-  const result = await next();
-
-  // Clean up dbConn after subcommand is done
-  await data.dbConn.close();
-
-  // make sure to return the subcommand's result if you care about it.
-  return result;
-}
-```
-
-## Handlers Throwing Errors
-
-Handlers can "buy into" improved error handling by throwing or rejecting with instances of [AppError]. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
+Handlers can buy into improved error handling by throwing or rejecting with instances of [AppError]. It extends `Error` with support for error codes, and it automatically "namespaces" your codes by prefixing them with `APP_`, so they won't conflict with `cli-of-mine` codes (or Node codes).
 
 For example:
 
@@ -241,35 +157,82 @@ try {
 }
 ```
 
-## Error Handling Strategies
+# Subcommands
 
-[exec] provides three strategies for automated error handling, which you can pick using the `errorStrategy` property of the [ExecConfig].
+`cli-of-mine` is designed to support arbitrarily nested levels of subcommands using a **middleware pattern** inspired by frameworks like Express. This allows you to handle options at every subcommand level.
 
-The `"log"` strategy is the default.
+The special thing about middlewares is that your handler **must choose when to relinquish control to the next handler** by calling `next()` (which returns a Promise). For example:
 
-**log strategy**
+```js
+function handler(ctx, next) {
+  // things to do before subcommand starts
 
-When `errorStrategy: "log"`, the [exec] function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.
+  // next() runs the subcommand's handler
+  return next().then(result => {
+    // things to do after subcommand is finished
+  });
+}
+```
 
-The [ExecResult] will contain a `processExitCode` property that indicates what exit code is recommended to be used. [exec] _will not_ exit the process automatically.
+Your final handler (the "controller" in Express parlance) can call `next` if it wants, but it doesn't have to. If it does, the `next` is a no-op.
 
-This is the default mode. It's useful if you want `cli-of-mine` to handle as much as possible, but you don't want it to exit the process for you.
+### Subcommand Options
 
-**throw strategy**
+Each "level" of command/subcommand specifies its own set of options. The handler is only provided the options relevant to that specific subcommand, not the ones before or after it.
 
-when `errorStrategy: "throw"`, errors during execution will cause the returned `Promise` to be rejected with an [ExecutionError] that you can inspect and handle manually.
+For example, assume `widgets` is a subcommand of your application and `list` is a subcommand of `widgets` -- so users can run `myapp widgets list`.
 
-This mode is useful for testing, or for cases where you want the code calling [exec] to be able to catch errors from within your handlers.
+If someone runs: `myapp -v widgets list --filter green`, then the options will be doled out like so:
 
-**exit strategy**
+1. The root handler is given the `-v` argument.
+2. The `widgets` handler is given no arguments.
+3. The `list` handler is given the `--filter green` argument.
 
-When `errorStrategy: "exit"`, errors during execution will be logged to the user. If the execution would result in a nonzero exit code, the process will be automatically exited with that code.
+If the `list` handler actually cares about the `-v` argument, the root handler has to give it that information explicitly using `ctx.data` (see below).
 
-This mode is useful if you want `cli-of-mine` to completely manage error handling, and you don't need to run any code after [exec] is finished.
+### Subcommands Sharing Data
+
+You cannot provide arguments to `next()`.
+
+If you want to share data between subcommands, you should assign it to the `ctx.data` object, which is reserved for arbitrary handler data.
+
+For example, the following handler will initialize a database connection for the subcommand to use, then clean it up once the subcommand is finished.
+
+> Note: The `async`/`await` syntax is used in this and remaining examples to improve readability. But good ol' Promise chains work just fine.
+
+```js
+async function handler(ctx, next) {
+  const { args, data } = ctx;
+
+  // initialize dbConn before running subcommand
+  data.dbConn = await getFooDatabaseConn(args.db);
+
+  const result = await next();
+
+  // Clean up dbConn after subcommand is done
+  await data.dbConn.close();
+
+  // make sure to return the subcommand's result if you care about it.
+  return result;
+}
+```
+
+### Required Subcommands
+
+Handlers have access to the `subcommand` property of [HandlerContext], which indicates which subcommand (if any) the user has requested. This can be used, for instance, to throw an error if no subcommands are specified:
+
+```js
+function handler(ctx, next) {
+  if (!ctx.subcommand) {
+    throw new AppError("BAD_COMMAND", "Must specify command");
+  }
+  return next();
+}
+```
 
 # Resources
 
-`cli-of-mine` includes support for declaring _resources_ and _verbs_ using the `resources` property of [ExecConfig]. In other words, it provides support for the `myapp [verb] [noun]` invocation pattern. (As used by `kubectl`, for instance.)
+`cli-of-mine` includes support for declaring _resources_ and _verbs_ using the `resources` property of [ExecConfig]. This provides support for the `myapp [verb] [noun]` invocation pattern, as used by `kubectl` for instance.
 
 As a trivial example, say we want to make a CLI that lets you run:
 
@@ -339,6 +302,80 @@ In this case, both these invocations are valid:
 ```bash
 myapp run widget    # prints "Running widget"
 myapp run           # prints "Default run behavior"
+```
+
+# Help Text
+
+`cli-of-mine` will intercept `--help` flags and handle them automatically. When this happens, _none_ of your handlers will be called and the `result` of the execution will be `undefined`.
+
+Different text is shown based on which command receives the `--help` flag. For example:
+
+```bash
+# displays root help for myapp
+myapp --help
+
+# displays help for "widgets" command
+myapp widgets --help
+
+# displays help for "list" subcommand
+myapp widgets list --help
+```
+
+You can disable this functionality by setting `generateHelp: false` in your [ExecConfig].
+
+# Version Text
+
+`cli-of-mine` will intercept `--version` options (_unless_ they are passed to a subcommand) and print version information based on the `version` property of the [ExecConfig]. This behavior can be disabled by setting `generateVersion: false`.
+
+# Error Strategies
+
+[exec] provides three strategies for automated error handling, which you can pick using the `errorStrategy` property of the [ExecConfig].
+
+The `"log"` strategy is the default.
+
+## Log
+
+When `errorStrategy: "log"`, the [exec] function will automatically catch and log any errors that occur during execution, including errors that your handlers throw. This means it never rejects.
+
+The [ExecResult] will contain a `processExitCode` property that indicates what exit code is recommended to be used. [exec] _will not_ exit the process automatically.
+
+This is the default mode. It's useful if you want `cli-of-mine` to handle as much as possible, but you don't want it to exit the process for you.
+
+## Throw
+
+when `errorStrategy: "throw"`, errors during execution will cause the returned `Promise` to be rejected with an [ExecutionError] that you can inspect and handle manually.
+
+This mode is useful for testing, or for cases where you want the code calling [exec] to be able to catch errors from within your handlers.
+
+## Exit
+
+When `errorStrategy: "exit"`, errors during execution will be logged to the user. If the execution would result in a nonzero exit code, the process will be automatically exited with that code.
+
+This mode is useful if you want `cli-of-mine` to completely manage error handling, and you don't need to run any code after [exec] is finished.
+
+# Testing
+
+One core design goal of `cli-of-mine` is to be testable _from the user's perspective_. In other words, it should be possible to easily write tests like:
+
+> "If I pass the --foo option, the output should include 'bar'."
+
+This can be done by using the stdio-related parameters on [ExecConfig], assuming your application uses the `cli-of-mine` logging primitives. For example:
+
+```js
+exec({
+  name: "testapp",
+  options: [{ name: "foo" }],
+
+  argv: ["--foo"],
+  stdout: "capture",
+
+  async handler(ctx, next) {
+    const { foo } = ctx.args;
+    ctx.console.log(foo ? "bar" : "bad request!");
+  }
+}).then(result => {
+  expect(result.stdout).toEqual("bar");
+});
 ```
 
 # FAQ
